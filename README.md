@@ -38,7 +38,7 @@ Esta separación evita repetir conteos de metas en cada hábito y evita confundi
 - **KPI 3 — Cumplimiento de metas:** porcentaje de metas cuyo último estado observado dentro del período está marcado como cumplido. Cada meta cuenta una sola vez; las actualizaciones repetidas no inflan el numerador ni el denominador.
 - **KPI 4 — Red de apoyo activa:** porcentaje de estudiantes con valoración registrada en el período cuya última valoración indica `red_apoyo_activa = true`. Cada estudiante cuenta una sola vez en el denominador; las valoraciones repetidas no aumentan su peso. Contactos e interacciones se muestran como variables complementarias y usan también la última valoración disponible por estudiante.
 
-Estas definiciones deben contrastarse con la rúbrica/instrumento oficial del proyecto antes de usar resultados en un informe institucional.
+Las tarjetas de KPI 1–4 muestran una observación por estudiante o por meta, según corresponda. El gráfico mensual resume primero las evaluaciones por estudiante-mes y luego promedia entre estudiantes. Las correlaciones exploratorias de hábitos usan una observación agregada por estudiante, requieren al menos 10 estudiantes emparejados y no permiten inferir causalidad. Estas definiciones deben contrastarse con la rúbrica/instrumento oficial del proyecto antes de usar resultados en un informe institucional.
 
 ## Estructura
 
