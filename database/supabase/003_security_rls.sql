@@ -75,7 +75,8 @@ as $$
             where te.id_terapeuta = p.id_terapeuta
               and te.id_estudiante = p_id_estudiante
               and te.activo = true
-              and (te.fecha_fin is null or te.fecha_fin >= current_date)
+              and te.fecha_inicio <= (now() at time zone 'America/Lima')::date
+              and (te.fecha_fin is null or te.fecha_fin >= (now() at time zone 'America/Lima')::date)
           )
         )
       )
