@@ -6,7 +6,7 @@ Sistema web para el seguimiento académico de resiliencia psicológica y crecimi
 
 ## Alcance acordado
 
-- Dos portales: **Terapeuta** y **Estudiante**.
+- Portales de uso: **Estudiante** y **Terapeuta**, más un espacio administrativo protegido para gestión de cuentas y asignaciones.
 - Los cuatro indicadores oficiales se mantienen separados de las variables explicativas:
   1. Índice de resiliencia (escala CD-RISC, sujeto a confirmar la versión e instrumento aplicado).
   2. Frecuencia de pensamientos intrusivos.
@@ -33,8 +33,8 @@ Esta separación evita repetir conteos de metas en cada hábito y evita confundi
 
 ### Definiciones operativas iniciales de KPI
 
-- **KPI 1 — Resiliencia:** promedio del puntaje registrado en las evaluaciones del período. El rango `0–100` está modelado para la escala de 25 ítems; confirmar instrumento y protocolo local antes de usar datos reales.
-- **KPI 2 — Pensamientos intrusivos:** promedio de frecuencia normalizada a 30 días: `conteo / días_de_referencia × 30`.
+- **KPI 1 — Resiliencia:** promedio del puntaje de la última evaluación disponible por estudiante dentro del período. El rango `0–100` está modelado para la escala de 25 ítems; confirmar instrumento y protocolo local antes de usar datos reales.
+- **KPI 2 — Pensamientos intrusivos:** promedio por estudiante usando su última frecuencia registrada en el período, normalizada a 30 días: `conteo / días_de_referencia × 30`.
 - **KPI 3 — Cumplimiento de metas:** porcentaje de metas cuyo último estado observado dentro del período está marcado como cumplido. Cada meta cuenta una sola vez; las actualizaciones repetidas no inflan el numerador ni el denominador.
 - **KPI 4 — Red de apoyo activa:** porcentaje de estudiantes con valoración registrada en el período cuya última valoración indica `red_apoyo_activa = true`. Cada estudiante cuenta una sola vez en el denominador; las valoraciones repetidas no aumentan su peso. Contactos e interacciones se muestran como variables complementarias y usan también la última valoración disponible por estudiante.
 
@@ -140,7 +140,7 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 
 - Acceso con Supabase Auth y recuperación de contraseña por correo; el usuario nuevo queda con rol `pendiente` hasta habilitación administrativa.
 - Portal estudiante: KPI personales, registro diario de hábitos, metas y consulta de sesiones propias.
-- Portal terapeuta: panel analítico, cartera asignada, Perfil 360 individual, evaluaciones clínicas, valoración de red de apoyo, programación y actualización de estado de sesiones, selección de sala y correlaciones exploratorias hábitos–indicadores (descriptivas, no causales).
+- Portal terapeuta: panel analítico, cartera asignada, Perfil 360 individual, evaluaciones clínicas, valoración de red de apoyo, programación y actualización de estado de sesiones, selección de sala y correlaciones exploratorias hábitos–indicadores (descriptivas, no causales). El panel administrativo también puede consultar el tablero general.
 - Portal administrador: habilitación de perfiles, vinculación de cuentas con estudiantes/terapeutas y administración de asignaciones con historial.
 - Rutas API con validación de entrada, comprobación de rol y alcance; la clave `service_role` permanece en servidor.
 - ETL con UPSERT de dimensiones y refresco transaccional de las cuatro tablas de hechos.
