@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { average, normalizeTo30Days, percentage } from "../src/lib/analytics/kpi";
+import { average, latestByKey, normalizeTo30Days, percentage } from "../src/lib/analytics/kpi";
 
 describe("cálculo de indicadores ResiliaUNT", () => {
   it("devuelve null cuando no hay observaciones", () => {
@@ -21,5 +21,17 @@ describe("cálculo de indicadores ResiliaUNT", () => {
   it("calcula porcentajes y protege denominadores vacíos", () => {
     expect(percentage(3, 4)).toBe(75);
     expect(percentage(0, 0)).toBeNull();
+  });
+
+  it("conserva solo la observación más reciente por estudiante", () => {
+    const rows = [
+      { student: 1, date: 20260110, active: true },
+      { student: 1, date: 20260210, active: false },
+      { student: 2, date: 20260205, active: true },
+    ];
+    const latest = latestByKey(rows, (row) => row.student, (row) => row.date);
+    expect(latest).toHaveLength(2);
+    expect(latest.find((row) => row.student === 1)?.active).toBe(false);
+    expect(latest.find((row) => row.student === 2)?.active).toBe(true);
   });
 });
