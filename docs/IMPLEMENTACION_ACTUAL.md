@@ -6,7 +6,7 @@
 - Panel administrativo protegido para habilitar perfiles, vincular estudiantes/terapeutas y gestionar asignaciones con historial.
 - Separación de portal de estudiante y portal profesional según el rol de `perfiles_app`.
 - Tablero con los cuatro KPI oficiales, tendencia mensual y variables complementarias separadas. El KPI de red activa utiliza la última valoración por estudiante dentro del período para evitar ponderación por frecuencia de evaluación.
-- Correlaciones exploratorias de Pearson hábitos–resiliencia y hábitos–pensamientos intrusivos, con emparejamiento estudiante-mes, mínimo de 10 pares y advertencia de medidas repetidas/no causalidad.
+- Correlaciones exploratorias de Pearson hábitos–resiliencia y hábitos–pensamientos intrusivos. Las observaciones mensuales se agregan por estudiante antes de calcular, se exige un mínimo de 10 estudiantes con datos emparejados y se presentan como asociaciones descriptivas, no causales.
 - Registro diario de hábitos por estudiante.
 - Creación y actualización de metas personales con una observación de estado por fecha.
 - Consulta de sesiones propias para el estudiante.
