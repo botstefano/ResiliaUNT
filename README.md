@@ -131,4 +131,4 @@ npm test
 npm run build
 ```
 
-La prueba de agregación KPI se ejecutó directamente con TypeScript transpilado y pasó los dos escenarios previstos. La instalación de dependencias npm excedió el límite del entorno, y aquí no hay PostgreSQL/Docker; por tanto no se declara aprobado `npm run build` ni se afirma que los SQL se hayan ejecutado en Supabase. La aplicación no está conectada todavía a un proyecto Supabase real ni desplegada en Render.
+La lógica de agregación KPI se comprobó con escenarios de valores controlados y casos sin denominador; Vitest queda disponible para su ejecución tras instalar dependencias. La instalación de dependencias npm excedió el límite del entorno, y aquí no hay PostgreSQL/Docker; por tanto no se declara aprobado `npm run build` ni se afirma que los SQL se hayan ejecutado en Supabase. La aplicación no está conectada todavía a un proyecto Supabase real ni desplegada en Render.
