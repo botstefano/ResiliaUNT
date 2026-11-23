@@ -17,12 +17,11 @@ export type AppUser = { id: string; email?: string | null; isDemo?: boolean };
 export async function getAuthContext() {
   const cookieStore = cookies();
   const demoToken = cookieStore.get(DEMO_SESSION_COOKIE)?.value;
+  const isMobileStudent = cookieStore.get("resilia_mobile_student")?.value === "1";
 
   if (process.env.DEMO_MODE_ENABLED === "true" && demoToken) {
     const claims = verifyDemoSession(demoToken);
     if (claims) {
-      // El cliente privilegiado vive solo en servidor. Las rutas que usan
-      // este contexto deben limitar consultas/escrituras al perfil sintético.
       const supabase = createSupabaseAdminClient();
       const profile: AppProfile = {
         id: claims.sub,
@@ -37,14 +36,19 @@ export async function getAuthContext() {
         email: claims.sub + "@demo.resiliaunt.local",
         isDemo: true,
       };
-      return { supabase, user, profile };
+      return { supabase, user, profile, isMobileStudent };
     }
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData.user) {
-    return { supabase, user: null as AppUser | null, profile: null as AppProfile | null };
+    return {
+      supabase,
+      user: null as AppUser | null,
+      profile: null as AppProfile | null,
+      isMobileStudent,
+    };
   }
 
   const { data: profile } = await supabase.from("perfiles_app")
@@ -55,5 +59,6 @@ export async function getAuthContext() {
     supabase,
     user: authData.user as AppUser,
     profile: (profile ?? null) as AppProfile | null,
+    isMobileStudent,
   };
 }

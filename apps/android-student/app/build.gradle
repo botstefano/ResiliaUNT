@@ -1,0 +1,30 @@
+plugins {
+    id "com.android.application"
+}
+
+def configuredPortalUrl = (project.findProperty("resiliauntPortalUrl") ?: "https://resiliaunt.onrender.com").toString()
+def cleanPortalUrl = configuredPortalUrl.replaceAll("/+$", "")
+
+android {
+    namespace "pe.edu.unt.resiliaunt.student"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "pe.edu.unt.resiliaunt.student"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "0.1.0"
+
+        buildConfigField "String", "PORTAL_BASE_URL", '"' + cleanPortalUrl + '"'
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

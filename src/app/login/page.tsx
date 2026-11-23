@@ -5,9 +5,20 @@ import LoginForm from "./login-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage({ searchParams }: { searchParams?: { error?: string } }) {
-  const { user } = await getAuthContext();
-  if (user) redirect("/portal");
+type LoginSearchParams = { error?: string; next?: string };
+
+export default async function LoginPage({ searchParams }: { searchParams?: LoginSearchParams }) {
+  const mobileStudentEntry = searchParams?.next === "/movil/estudiante";
+  const redirectTo = mobileStudentEntry ? "/movil/estudiante" : "/portal";
+  const { user, profile } = await getAuthContext();
+
+  if (user && !mobileStudentEntry) redirect("/portal");
+  if (user && mobileStudentEntry && profile?.rol === "estudiante" && profile.id_estudiante) {
+    redirect("/movil/estudiante");
+  }
+
+  const mobileAccessDenied = Boolean(user && mobileStudentEntry);
+
   return (
     <main className="flex min-h-screen items-center justify-center px-5 py-12">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-line bg-white shadow-soft md:grid-cols-2">
@@ -25,20 +36,36 @@ export default async function LoginPage({ searchParams }: { searchParams?: { err
             <h1 className="mt-2 text-3xl font-semibold">ResiliaUNT</h1>
           </div>
           <h2 className="text-2xl font-semibold">Iniciar sesión</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">Accede con la cuenta institucional habilitada para el sistema.</p>
+          <p className="mt-2 text-sm leading-6 text-muted">Accede con la cuenta habilitada para ResiliaUNT.</p>
           {searchParams?.error === "auth_callback_failed" && (
             <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
               El enlace de autenticación no pudo validarse o ha expirado. Solicita un nuevo enlace.
             </p>
           )}
-          <LoginForm />
-          {process.env.DEMO_MODE_ENABLED === "true" && <div className="mt-7 rounded-xl border border-line p-4">
-            <p className="text-sm font-semibold">¿Quieres probar el prototipo?</p>
-            <p className="mt-1 text-xs leading-5 text-muted">Usa identidades sintéticas sin crear cuentas institucionales.</p>
-            <Link href="/demo" className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-brand-600 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
-              Entrar al modo de demostración
-            </Link>
-          </div>}
+          {mobileAccessDenied ? (
+            <div className="mt-7 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-950">Acceso exclusivo para estudiantes</p>
+              <p className="mt-2 text-sm leading-6 text-amber-900">
+                La aplicación móvil está reservada a cuentas vinculadas a un perfil de estudiante. Esta cuenta no tiene ese rol habilitado.
+              </p>
+              <form action="/api/auth/logout" method="post" className="mt-4">
+                <button className="w-full rounded-xl bg-brand-700 px-4 py-3 text-sm font-semibold text-white">
+                  Cerrar esta sesión
+                </button>
+              </form>
+            </div>
+          ) : (
+            <LoginForm redirectTo={redirectTo} />
+          )}
+          {!mobileStudentEntry && process.env.DEMO_MODE_ENABLED === "true" && (
+            <div className="mt-7 rounded-xl border border-line p-4">
+              <p className="text-sm font-semibold">¿Quieres probar el prototipo?</p>
+              <p className="mt-1 text-xs leading-5 text-muted">Usa identidades sintéticas sin crear cuentas institucionales.</p>
+              <Link href="/demo" className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-brand-600 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
+                Entrar al modo de demostración
+              </Link>
+            </div>
+          )}
           <div className="mt-4 text-right">
             <Link href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
           </div>
