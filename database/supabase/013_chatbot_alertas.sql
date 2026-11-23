@@ -34,6 +34,7 @@ grant select, update on table public.chatbot_alertas to authenticated;
 grant select, insert, update on table public.chatbot_alertas to service_role;
 grant usage, select on sequence public.chatbot_alertas_id_alerta_seq to service_role;
 
+
 drop policy if exists chatbot_alertas_select_therapist on public.chatbot_alertas;
 create policy chatbot_alertas_select_therapist
 on public.chatbot_alertas for select to authenticated
@@ -43,7 +44,18 @@ using (
     where p.id = (select auth.uid())
       and (
         p.rol = 'administrador'
-        or (p.rol = 'terapeuta' and p.id_terapeuta = chatbot_alertas.id_terapeuta)
+        or (
+          p.rol = 'terapeuta'
+          and p.id_terapeuta = chatbot_alertas.id_terapeuta
+          and exists (
+            select 1 from oltp_resiliencia.terapeuta_estudiante te
+            where te.id_terapeuta = p.id_terapeuta
+              and te.id_estudiante = chatbot_alertas.id_estudiante
+              and te.activo = true
+              and te.fecha_inicio <= (now() at time zone 'America/Lima')::date
+              and (te.fecha_fin is null or te.fecha_fin >= (now() at time zone 'America/Lima')::date)
+          )
+        )
       )
   )
 );
@@ -57,7 +69,18 @@ using (
     where p.id = (select auth.uid())
       and (
         p.rol = 'administrador'
-        or (p.rol = 'terapeuta' and p.id_terapeuta = chatbot_alertas.id_terapeuta)
+        or (
+          p.rol = 'terapeuta'
+          and p.id_terapeuta = chatbot_alertas.id_terapeuta
+          and exists (
+            select 1 from oltp_resiliencia.terapeuta_estudiante te
+            where te.id_terapeuta = p.id_terapeuta
+              and te.id_estudiante = chatbot_alertas.id_estudiante
+              and te.activo = true
+              and te.fecha_inicio <= (now() at time zone 'America/Lima')::date
+              and (te.fecha_fin is null or te.fecha_fin >= (now() at time zone 'America/Lima')::date)
+          )
+        )
       )
   )
 )
@@ -67,7 +90,18 @@ with check (
     where p.id = (select auth.uid())
       and (
         p.rol = 'administrador'
-        or (p.rol = 'terapeuta' and p.id_terapeuta = chatbot_alertas.id_terapeuta)
+        or (
+          p.rol = 'terapeuta'
+          and p.id_terapeuta = chatbot_alertas.id_terapeuta
+          and exists (
+            select 1 from oltp_resiliencia.terapeuta_estudiante te
+            where te.id_terapeuta = p.id_terapeuta
+              and te.id_estudiante = chatbot_alertas.id_estudiante
+              and te.activo = true
+              and te.fecha_inicio <= (now() at time zone 'America/Lima')::date
+              and (te.fecha_fin is null or te.fecha_fin >= (now() at time zone 'America/Lima')::date)
+          )
+        )
       )
   )
 );

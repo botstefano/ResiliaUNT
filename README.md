@@ -57,6 +57,7 @@ database/supabase/
   011_foreign_key_indexes.sql
   012_generador_demo_completo.sql
   013_chatbot_alertas.sql
+  014_chatbot_alertas_scope.sql
 docs/
   GUIA_SUPABASE_RENDER.md
   IMPLEMENTACION_ACTUAL.md
@@ -116,6 +117,7 @@ En el SQL Editor, ejecutar en este orden:
 10. Opcional, únicamente para desarrollo inicial: `database/supabase/005_seed_demo.sql`
 11. Para el conjunto sintético completo: `database/supabase/012_generador_demo_completo.sql`. Es idempotente y amplía la simulación a 200 estudiantes, 2,400 evaluaciones, más de 21,000 hábitos, metas, red de apoyo y sesiones; conserva los datos existentes y refresca el DataMart.
 12. Revisa `database/supabase/006_validaciones_kpi.sql`.
+13. Ejecuta `database/supabase/013_chatbot_alertas.sql` y luego `database/supabase/014_chatbot_alertas_scope.sql` para crear y asegurar los avisos de los chatbots. En el proyecto Supabase conectado, estos cambios ya se aplicaron directamente.
 
 Luego, en **Project Settings → API → Exposed schemas**, mantener `public` y agregar `oltp_resiliencia` y `datamart_resiliencia`. No exponer `resilia_private`, que contiene funciones internas de autorización.
 

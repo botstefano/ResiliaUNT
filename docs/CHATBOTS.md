@@ -20,9 +20,10 @@ Ante preguntas clínicas sensibles deriva al profesional y permite registrar una
 - Groq no genera SQL ni ejecuta herramientas. El backend prepara consultas fijas y valida el alcance antes de llamar al modelo.
 - El terapeuta consulta solo estudiantes sintéticos activos asignados a su `id_terapeuta`.
 - El estudiante consulta solo el registro sintético propio.
-- La implementación no almacena mensajes ni historiales de chat en Supabase.
+- La implementación no almacena mensajes ni historiales de chat en Supabase. Los mensajes recientes enviados por la interfaz y el resumen sintético autorizado se transmiten a Groq para generar cada respuesta; no se persisten como historial en ResiliaUNT.
 - `public.chatbot_alertas` solo contiene estudiante, terapeuta, tipo, estado y marcas de tiempo; no guarda el texto que escribió el estudiante.
 - RLS está habilitado para la tabla de avisos. Los endpoints realizan comprobaciones de rol y pertenencia antes de usar el cliente privilegiado de servidor.
+- La respuesta automática ante una situación prioritaria usa patrones de texto simples; no es un detector exhaustivo ni sustituye supervisión humana. El aviso se registra en el panel, no envía un correo ni garantiza contacto inmediato.
 - El proyecto sigue en modo de datos sintéticos. Antes de incorporar datos reales se necesita una revisión institucional de privacidad, seguridad, consentimiento, retención, salvaguarda y protocolos profesionales.
 
 ## Variables de Render

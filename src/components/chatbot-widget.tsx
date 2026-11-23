@@ -172,7 +172,8 @@ export default function ChatbotWidget({ role }: { role: Role }) {
                   {message.showSafetyLinks && (
                     <div className="mt-3 space-y-2 border-t border-line pt-3 text-xs">
                       <a href="tel:113" className="block rounded-lg border border-line px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50">Llamar a Línea 113 · opción 5</a>
-                      <p className="text-muted">Busca también a una persona adulta de confianza y apoyo presencial si lo necesitas.</p>
+                      <a href="tel:106" className="block rounded-lg border border-line px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50">SAMU 106 · emergencia médica</a>
+                      <p className="text-muted">Acércate también a una persona adulta de confianza y pide apoyo presencial. No esperes una respuesta del chat.</p>
                     </div>
                   )}
                   {message.offerContact && (

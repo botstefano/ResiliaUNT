@@ -281,8 +281,8 @@ export async function buildStudentContext(admin: any, studentId: number) {
     therapistIds.length ? admin.schema(OLTP).from("terapeuta").select("id_terapeuta,nombre").in("id_terapeuta", therapistIds) : Promise.resolve({ data: [], error: null }),
   ]);
   if (roomsResult.error || therapistsResult.error) throw new Error("No se pudo completar la información de las sesiones.");
-  const rooms = new Map((roomsResult.data ?? []).map((r: any) => [Number(r.id_sala), r]));
-  const therapists = new Map((therapistsResult.data ?? []).map((r: any) => [Number(r.id_terapeuta), r]));
+  const rooms = new Map<number, any>((roomsResult.data ?? []).map((r: any) => [Number(r.id_sala), r]));
+  const therapists = new Map<number, any>((therapistsResult.data ?? []).map((r: any) => [Number(r.id_terapeuta), r]));
   const appointments = (sessions ?? []).map((r: any) => {
     const room = rooms.get(Number(r.id_sala));
     const therapist = therapists.get(Number(r.id_terapeuta));
