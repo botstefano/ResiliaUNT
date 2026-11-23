@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 
 type Student = { id_estudiante: number; codigo_universitario: string; nombre_visible: string; ciclo_academico: number | null; turno: string | null };
 type Session = { id_sesion: number; id_estudiante: number; inicio: string; estado: string; modalidad: string };
@@ -87,12 +88,14 @@ export default function TherapistWorkspace() {
           <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">{students.length} estudiantes</span>
         </div>
         {students.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {students.map((student) => <button key={student.id_estudiante} type="button" onClick={() => setStudentId(String(student.id_estudiante))}
-            className={"rounded-xl border p-4 text-left " + (studentId === String(student.id_estudiante) ? "border-brand-500 bg-brand-50" : "border-line hover:bg-canvas")}>
-            <p className="text-sm font-semibold">{student.nombre_visible}</p>
-            <p className="mt-1 text-xs text-muted">{student.codigo_universitario}</p>
-            <p className="mt-2 text-xs text-muted">Ciclo {student.ciclo_academico ?? "—"} · {student.turno ?? "—"}</p>
-          </button>)}
+          {students.map((student) => <article key={student.id_estudiante} className={"rounded-xl border p-4 " + (studentId === String(student.id_estudiante) ? "border-brand-500 bg-brand-50" : "border-line")}>
+            <button type="button" onClick={() => setStudentId(String(student.id_estudiante))} className="w-full text-left">
+              <p className="text-sm font-semibold">{student.nombre_visible}</p>
+              <p className="mt-1 text-xs text-muted">{student.codigo_universitario}</p>
+              <p className="mt-2 text-xs text-muted">Ciclo {student.ciclo_academico ?? "—"} · {student.turno ?? "—"}</p>
+            </button>
+            <Link href={"/portal/terapeuta/estudiantes/" + student.id_estudiante} className="mt-3 inline-block text-xs font-semibold text-brand-700 hover:underline">Abrir Perfil 360 →</Link>
+          </article>)
         </div> : <p className="mt-4 rounded-xl bg-canvas p-4 text-sm text-muted">Todavía no tienes estudiantes asignados. El administrador debe registrar las relaciones profesionales.</p>}
       </section>
 
