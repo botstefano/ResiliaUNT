@@ -125,7 +125,7 @@ function compactTherapistContext(context: any, message: string) {
       porCiclo: data.porCiclo,
       porTurno: data.porTurno,
       tendenciaMensual: Array.isArray(data.tendenciaMensual) ? data.tendenciaMensual.slice(-6) : [],
-      habitos,
+      habitos: habits,
       metas: data.metas,
       registrosHabitos: {
         total: data.registrosHabitos?.total ?? 0,
