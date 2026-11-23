@@ -60,6 +60,43 @@ export default async function PortalHomePage() {
           </div>
         </section>
       </div>
+      {!isStudent && (
+        <section className="mt-6 rounded-2xl border border-line bg-white p-5 shadow-soft">
+          <div className="mb-5">
+            <p className="text-sm font-medium text-brand-700">Analítica exploratoria</p>
+            <h2 className="mt-1 text-lg font-semibold">Relación entre hábitos e indicadores</h2>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Correlación de Pearson entre el porcentaje mensual de hábitos completados y los promedios clínicos,
+              emparejados por estudiante y mes. Se requieren al menos 10 pares para mostrar un coeficiente.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <article className="rounded-xl bg-canvas p-4">
+              <p className="text-sm text-muted">Hábitos ↔ resiliencia</p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums">
+                {summary.habitResilienceCorrelation === null ? "—" : summary.habitResilienceCorrelation.toFixed(2)}
+              </p>
+              <p className="mt-1 text-xs text-muted">Coeficiente r de Pearson</p>
+            </article>
+            <article className="rounded-xl bg-canvas p-4">
+              <p className="text-sm text-muted">Hábitos ↔ pensamientos intrusivos</p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums">
+                {summary.habitIntrusiveCorrelation === null ? "—" : summary.habitIntrusiveCorrelation.toFixed(2)}
+              </p>
+              <p className="mt-1 text-xs text-muted">Coeficiente r de Pearson</p>
+            </article>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-muted">
+            {summary.habitAssociationPairs < 10
+              ? "Hay " + summary.habitAssociationPairs + " pares estudiante-mes; aún no se alcanza el mínimo de 10."
+              : summary.habitResilienceCorrelation === null && summary.habitIntrusiveCorrelation === null
+                ? "La correlación no es calculable con estos datos (por ejemplo, por falta de variabilidad)."
+                : "Base: " + summary.habitAssociationPairs + " pares estudiante-mes."}
+            {" "}Es una asociación descriptiva: no demuestra causalidad ni reemplaza un análisis longitudinal que tenga en cuenta medidas repetidas.
+          </p>
+        </section>
+      )}
+
       <p className="mt-6 text-xs leading-5 text-muted">ResiliaUNT es una herramienta de seguimiento y apoyo. No realiza diagnósticos, no interpreta síntomas individuales y no sustituye la atención de profesionales.</p>
     </>
   );
