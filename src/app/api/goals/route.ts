@@ -4,6 +4,8 @@ import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
 import { todayInPeru } from "@/lib/dates";
 
+export const dynamic = "force-dynamic";
+
 const createGoalSchema = z.object({
   categoria: z.string().trim().min(2).max(50),
   descripcion: z.string().trim().min(3).max(180),
