@@ -19,8 +19,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const date = url.searchParams.get("fecha") || todayInPeru();
   const [habitsResult, recordsResult] = await Promise.all([
-    supabase.from("habito").select("id_habito, nombre, categoria").eq("activo", true).order("nombre"),
-    supabase.from("registro_habito").select("id_registro_habito, id_habito, fecha, intensidad, completado").eq("id_estudiante", profile.id_estudiante).eq("fecha", date).order("id_habito"),
+    supabase.schema("oltp_resiliencia").from("habito").select("id_habito, nombre, categoria").eq("activo", true).order("nombre"),
+    supabase.schema("oltp_resiliencia").from("registro_habito").select("id_registro_habito, id_habito, fecha, intensidad, completado").eq("id_estudiante", profile.id_estudiante).eq("fecha", date).order("id_habito"),
   ]);
   if (habitsResult.error || recordsResult.error) return NextResponse.json({ error: "No se pudieron cargar los hábitos." }, { status: 500 });
   return NextResponse.json({ habits: habitsResult.data ?? [], records: recordsResult.data ?? [], date });
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Datos de hábito inválidos." }, { status: 400 });
 
   const payload = { ...parsed.data, id_estudiante: profile.id_estudiante };
-  const { data, error } = await supabase.from("registro_habito")
+  const { data, error } = await supabase.schema("oltp_resiliencia").from("registro_habito")
     .upsert(payload, { onConflict: "id_estudiante,id_habito,fecha" })
     .select("id_registro_habito, id_habito, fecha, intensidad, completado").single();
   if (error) return NextResponse.json({ error: "No se pudo guardar el registro. Verifica el catálogo y la configuración RLS." }, { status: 400 });
