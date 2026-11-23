@@ -36,9 +36,9 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   const toKey = Number(today.replaceAll("-", ""));
 
   const [clinicalResult, goalsResult, networkResult] = await Promise.all([
-    supabase.from("fact_evaluacion_clinica").select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
-    supabase.from("fact_seguimiento_meta").select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
-    supabase.from("fact_red_apoyo").select("tiempo_key, red_key, contactos_activos, interacciones_sociales").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
+    supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica").select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
+    supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta").select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
+    supabase.schema("datamart_resiliencia").from("fact_red_apoyo").select("tiempo_key, red_key, contactos_activos, interacciones_sociales").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
   ]);
 
   if (clinicalResult.error || goalsResult.error || networkResult.error) {
@@ -52,7 +52,7 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   let networkDimensions: NetworkDimension[] = [];
 
   if (redKeys.length) {
-    const { data, error } = await supabase.from("dim_red_apoyo").select("red_key, red_apoyo_activa").in("red_key", redKeys);
+    const { data, error } = await supabase.schema("datamart_resiliencia").from("dim_red_apoyo").select("red_key, red_apoyo_activa").in("red_key", redKeys);
     if (error) throw new Error("No se pudo consultar la dimensión de red de apoyo.");
     networkDimensions = (data ?? []) as NetworkDimension[];
   }
