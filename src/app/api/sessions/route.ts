@@ -8,7 +8,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   if (!profile || !["estudiante", "terapeuta", "administrador"].includes(profile.rol)) return NextResponse.json({ error: "Sin permisos." }, { status: 403 });
 
-  let query = supabase.from("sesion_terapia")
+  let query = supabase.schema("oltp_resiliencia").from("sesion_terapia")
     .select("id_sesion, id_estudiante, inicio, fin, estado, modalidad")
     .order("inicio", { ascending: false }).limit(100);
   if (profile.rol === "estudiante" && profile.id_estudiante) query = query.eq("id_estudiante", profile.id_estudiante);
@@ -31,12 +31,12 @@ export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Datos de sesión inválidos." }, { status: 400 });
 
-  const { data: assignment } = await supabase.from("terapeuta_estudiante")
+  const { data: assignment } = await supabase.schema("oltp_resiliencia").from("terapeuta_estudiante")
     .select("id_asignacion").eq("id_terapeuta", profile.id_terapeuta)
     .eq("id_estudiante", parsed.data.id_estudiante).eq("activo", true).maybeSingle();
   if (!assignment) return NextResponse.json({ error: "El estudiante no pertenece a tu cartera asignada." }, { status: 403 });
 
-  const { data, error } = await supabase.from("sesion_terapia").insert({
+  const { data, error } = await supabase.schema("oltp_resiliencia").from("sesion_terapia").insert({
     id_estudiante: parsed.data.id_estudiante,
     id_terapeuta: profile.id_terapeuta,
     inicio: parsed.data.inicio,
@@ -64,7 +64,7 @@ export async function PATCH(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Estado de sesión inválido." }, { status: 400 });
 
-  const { data, error } = await supabase.from("sesion_terapia")
+  const { data, error } = await supabase.schema("oltp_resiliencia").from("sesion_terapia")
     .update({ estado: parsed.data.estado })
     .eq("id_sesion", parsed.data.id_sesion)
     .eq("id_terapeuta", profile.id_terapeuta)
