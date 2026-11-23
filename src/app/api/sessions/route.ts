@@ -3,6 +3,8 @@ import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const { supabase, user, profile } = await getAuthContext();
   if (!user) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
