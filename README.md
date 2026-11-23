@@ -2,7 +2,7 @@
 
 Sistema web para el seguimiento académico de resiliencia psicológica y crecimiento postraumático de estudiantes de **Ingeniería de Sistemas de la Universidad Nacional de Trujillo (UNT)** que reciben atención en el servicio oficial de terapia considerado por el proyecto.
 
-> **Estado del repositorio:** base funcional conectada al proyecto Supabase `ResiliaUNT`, con datos exclusivamente sintéticos y validaciones SQL ejecutadas. El despliegue en Render y las pruebas E2E de autenticación aún están pendientes.
+> **Estado del repositorio:** base funcional conectada a Supabase y desplegada en Render, con datos exclusivamente sintéticos. La integración de los chatbots Nexo y Brújula se documenta en [docs/CHATBOTS.md](docs/CHATBOTS.md). Las pruebas E2E de conversación con Groq deben completarse con las claves/modelos del propietario.
 
 ## Alcance acordado
 
@@ -14,7 +14,7 @@ Sistema web para el seguimiento académico de resiliencia psicológica y crecimi
   4. Red de apoyo activa.
 - Los hábitos son variables de seguimiento/análisis, no un quinto KPI oficial.
 - Arquitectura actual: Next.js 14 + React + Tailwind, API Routes, Supabase PostgreSQL/Auth y visualizaciones Recharts. Render se considera como hosting de la aplicación. Azure/Power BI quedan fuera de esta fase.
-- La integración con IA no se activa en esta primera fase. No se presenta el sistema como terapeuta, no diagnostica y no toma decisiones clínicas.
+- Los asistentes Nexo (terapeuta) y Brújula (estudiante) ofrecen analítica descriptiva y orientación de uso, respectivamente. No diagnostican, no recomiendan tratamientos ni toman decisiones clínicas.
 
 ## Modelo de datos y decisiones de granularidad
 
@@ -56,6 +56,7 @@ database/supabase/
   010_hardening_rls.sql
   011_foreign_key_indexes.sql
   012_generador_demo_completo.sql
+  013_chatbot_alertas.sql
 docs/
   GUIA_SUPABASE_RENDER.md
   IMPLEMENTACION_ACTUAL.md
@@ -67,6 +68,8 @@ src/app/
     sesiones/
     terapeuta/
   api/
+    chat/
+    chatbot/alerts/
     admin/
     therapist/
     habits/
@@ -79,6 +82,7 @@ src/app/
 components/
 lib/
   analytics/
+  chatbot/
   auth/
   supabase/
 tests/
@@ -145,6 +149,13 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 ## Modo de demostración
 
 Con `DEMO_MODE_ENABLED=true` y `DEMO_SESSION_SECRET` configurado solo en el servidor, la ruta `/demo` permite entrar como uno de los 200 estudiantes o uno de los tres terapeutas sintéticos, sin crear usuarios en Supabase Auth. La sesión temporal se firma en servidor y caduca a las 4 horas. Cada estudiante ve y modifica solo sus datos; cada terapeuta consulta su cartera activa asignada. No existe identidad demo de administrador. Mantén el modo deshabilitado para entornos con datos reales.
+
+## Chatbots implementados
+
+- **Nexo:** asistente analítico para terapeutas, con consultas descriptivas del DataMart limitadas a su cartera sintética vigente.
+- **Brújula:** asistente de acompañamiento para estudiantes, con acceso a sus propios KPI, hábitos, metas y próximas sesiones; respuesta de derivación ante consultas sensibles.
+- Avisos de contacto y prioridad visibles para el terapeuta asignado. No se guarda el texto de las conversaciones y no se afirma que se haya enviado correo o contacto humano.
+- Configuración de Groq en Render mediante variables privadas documentadas en `.env.example`. Consulta [`docs/CHATBOTS.md`](docs/CHATBOTS.md).
 
 ## Módulos implementados en esta primera base
 

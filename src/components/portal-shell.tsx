@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Activity, BarChart3, CalendarDays, HeartHandshake, LogOut, ShieldCheck, Target } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/auth/context";
+import ChatbotWidget from "@/components/chatbot-widget";
 
 type Props = { children: React.ReactNode; role: AppRole; displayName: string; isDemo?: boolean };
 
@@ -70,6 +71,7 @@ export default function PortalShell({ children, role, displayName, isDemo = fals
           {children}
         </div>
       </main>
+      {(role === "estudiante" || role === "terapeuta") && <ChatbotWidget role={role} />}
     </div>
   );
 }
