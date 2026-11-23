@@ -61,7 +61,7 @@ export default function TherapistWorkspace() {
         body = { id_estudiante: Number(studentId), fecha: date, periodo_referencia_dias: Number(period), red_apoyo_activa: supportActive === "true", contactos_activos: Number(contacts), interacciones_sociales: Number(interactions) };
       } else {
         endpoint = "/api/sessions";
-        body = { id_estudiante: Number(studentId), inicio: new Date(sessionAt + ":00-05:00").toISOString(), modalidad };
+        body = { id_estudiante: Number(studentId), inicio: new Date(sessionAt + ":00-05:00").toISOString(), modalidad: modality };
       }
 
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
