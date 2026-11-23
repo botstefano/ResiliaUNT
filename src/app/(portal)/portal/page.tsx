@@ -32,7 +32,7 @@ export default async function PortalHomePage() {
         <MetricCard label="Índice de resiliencia" value={format(summary.resilience)} note={summary.evaluationsCount + " evaluaciones en el período · escala a confirmar con el responsable profesional"} />
         <MetricCard label="Pensamientos intrusivos" value={format(summary.intrusivePer30Days)} note="Frecuencia promedio normalizada a 30 días" accent="bg-amber-500" />
         <MetricCard label="Cumplimiento de metas" value={format(summary.goalCompletionPct, "%")} note={summary.goalsCount + " metas con estado observado en el período"} accent="bg-indigo-500" />
-        <MetricCard label="Red de apoyo activa" value={format(summary.activeSupportPct, "%")} note={summary.supportEvaluationsCount + " valoraciones de red en el período"} accent="bg-sky-500" />
+        <MetricCard label="Red de apoyo activa" value={format(summary.activeSupportPct, "%")} note={summary.supportStudentsCount + " estudiantes · última valoración de cada uno en el período"} accent="bg-sky-500" />
       </section>
 
       <div className="mt-7 grid gap-5 xl:grid-cols-[1.6fr_1fr]">
