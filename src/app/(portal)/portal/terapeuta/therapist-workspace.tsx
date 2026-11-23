@@ -77,6 +77,23 @@ export default function TherapistWorkspace() {
     } finally { setSaving(false); }
   }
 
+  async function updateSessionStatus(sessionId: number, status: string) {
+    setSaving(true); setMessage("");
+    try {
+      const response = await fetch("/api/sessions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_sesion: sessionId, estado: status }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "No se pudo actualizar la sesión.");
+      setMessage("Estado de sesión actualizado.");
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo actualizar.");
+    } finally { setSaving(false); }
+  }
+
   const tabs: Array<{ key: Tab; label: string }> = [
     { key: "clinical", label: "Evaluación clínica" },
     { key: "support", label: "Red de apoyo" },
@@ -152,7 +169,11 @@ export default function TherapistWorkspace() {
         {sessions.length ? <div className="divide-y divide-line">
           {sessions.map((session) => <div key={session.id_sesion} className="flex flex-wrap justify-between gap-3 py-3 first:pt-0">
             <div><p className="text-sm font-medium">{students.find((student) => student.id_estudiante === session.id_estudiante)?.nombre_visible || "Estudiante asignado"}</p><p className="mt-1 text-xs text-muted">{new Date(session.inicio).toLocaleString("es-PE", { dateStyle: "medium", timeStyle: "short" })} · {session.modalidad}</p></div>
-            <span className="rounded-full bg-brand-50 px-3 py-1 text-xs text-brand-700">{session.estado}</span>
+            <select aria-label="Estado de sesión" value={session.estado} disabled={saving}
+              onChange={(event) => updateSessionStatus(session.id_sesion, event.target.value)}
+              className="rounded-lg border border-line px-2 py-1 text-xs text-brand-700 disabled:opacity-50">
+              <option>Programada</option><option>Realizada</option><option>Cancelada</option><option>No asistió</option>
+            </select>
           </div>)}
         </div> : <p className="rounded-xl bg-canvas p-4 text-sm text-muted">No hay sesiones registradas.</p>}
       </section>
