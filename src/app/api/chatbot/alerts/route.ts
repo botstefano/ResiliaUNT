@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createStudentAlert } from "@/lib/chatbot/alerts";
+import { todayInPeru } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,19 @@ export async function GET() {
     .eq("activo", true).like("codigo_terapeuta", "DEMO-%").maybeSingle();
   if (therapistError || !therapist) return NextResponse.json({ error: "El asistente solo está disponible para perfiles sintéticos habilitados." }, { status: 403 });
 
+  const today = todayInPeru();
+  const { data: assignments, error: assignmentsError } = await admin.schema("oltp_resiliencia")
+    .from("terapeuta_estudiante").select("id_estudiante")
+    .eq("id_terapeuta", profile.id_terapeuta).eq("activo", true)
+    .lte("fecha_inicio", today).or("fecha_fin.is.null,fecha_fin.gte." + today);
+  if (assignmentsError) return NextResponse.json({ error: "No se pudo validar la cartera profesional." }, { status: 500 });
+  const assignedIds = [...new Set((assignments ?? []).map((row: any) => Number(row.id_estudiante)))];
+  if (!assignedIds.length) return NextResponse.json({ alerts: [] });
+
   const { data: alerts, error } = await admin.from("chatbot_alertas")
     .select("id_alerta,id_estudiante,tipo,estado,creada_en")
     .eq("id_terapeuta", profile.id_terapeuta).eq("estado", "pendiente")
+    .in("id_estudiante", assignedIds)
     .order("creada_en", { ascending: false }).limit(25);
   if (error) return NextResponse.json({ error: "No se pudieron cargar los avisos." }, { status: 500 });
   const ids = [...new Set((alerts ?? []).map((row: any) => Number(row.id_estudiante)))];
@@ -80,6 +91,17 @@ export async function PATCH(request: Request) {
     .select("id_terapeuta").eq("id_terapeuta", profile.id_terapeuta)
     .eq("activo", true).like("codigo_terapeuta", "DEMO-%").maybeSingle();
   if (!therapist) return NextResponse.json({ error: "Perfil profesional no habilitado." }, { status: 403 });
+
+  const { data: targetAlert, error: targetError } = await admin.from("chatbot_alertas")
+    .select("id_alerta,id_estudiante").eq("id_alerta", parsed.data.id)
+    .eq("id_terapeuta", profile.id_terapeuta).eq("estado", "pendiente").maybeSingle();
+  if (targetError || !targetAlert) return NextResponse.json({ error: "Aviso no encontrado en tu cartera." }, { status: 404 });
+  const today = todayInPeru();
+  const { data: assignment } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
+    .select("id_asignacion").eq("id_terapeuta", profile.id_terapeuta)
+    .eq("id_estudiante", targetAlert.id_estudiante).eq("activo", true)
+    .lte("fecha_inicio", today).or("fecha_fin.is.null,fecha_fin.gte." + today).maybeSingle();
+  if (!assignment) return NextResponse.json({ error: "El aviso ya no pertenece a una asignación vigente." }, { status: 403 });
 
   const { data, error } = await admin.from("chatbot_alertas").update({
     estado: "atendida", atendida_en: new Date().toISOString(),

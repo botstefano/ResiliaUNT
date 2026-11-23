@@ -99,6 +99,13 @@ export async function POST(request: Request) {
 
   try {
     if (role === "estudiante") {
+      const { data: ownStudent, error: ownStudentError } = await admin.schema("oltp_resiliencia").from("estudiante")
+        .select("id_estudiante,codigo_universitario,activo")
+        .eq("id_estudiante", profile.id_estudiante).eq("activo", true)
+        .like("codigo_universitario", "DEMO-%").maybeSingle();
+      if (ownStudentError || !ownStudent) {
+        return NextResponse.json({ error: "Brújula solo está habilitada para perfiles estudiantiles sintéticos activos." }, { status: 403 });
+      }
       const userText = [parsed.data.message, ...parsed.data.history.filter((m) => m.role === "user").map((m) => m.content)].join("\n");
       if (CRISIS_PATTERNS.some((pattern) => pattern.test(userText))) {
         return NextResponse.json(await handleStudentCrisis(admin, profile.id_estudiante!));
