@@ -29,7 +29,7 @@ export default async function PortalHomePage() {
       </div>}
 
       <section aria-label="Indicadores oficiales" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Índice de resiliencia" value={format(summary.resilience)} note={summary.evaluationsCount + " evaluaciones en el período · escala a confirmar con el responsable profesional"} />
+        <MetricCard label="Índice de resiliencia" value={format(summary.resilience)} note={summary.evaluatedStudentsCount + " estudiantes · " + summary.evaluationsCount + " evaluaciones; cada estudiante cuenta una vez"} />
         <MetricCard label="Pensamientos intrusivos" value={format(summary.intrusivePer30Days)} note="Frecuencia promedio normalizada a 30 días" accent="bg-amber-500" />
         <MetricCard label="Cumplimiento de metas" value={format(summary.goalCompletionPct, "%")} note={summary.goalsCount + " metas con estado observado en el período"} accent="bg-indigo-500" />
         <MetricCard label="Red de apoyo activa" value={format(summary.activeSupportPct, "%")} note={summary.supportStudentsCount + " estudiantes · última valoración de cada uno en el período"} accent="bg-sky-500" />
@@ -39,7 +39,7 @@ export default async function PortalHomePage() {
         <section className="rounded-2xl border border-line bg-white p-5 shadow-soft">
           <div className="mb-4">
             <h2 className="font-semibold">Evolución de indicadores clínicos</h2>
-            <p className="mt-1 text-xs text-muted">Promedios mensuales. Las series usan escalas distintas y ejes independientes.</p>
+            <p className="mt-1 text-xs text-muted">Promedios mensuales primero por estudiante y mes, luego entre estudiantes. Las series usan escalas distintas y ejes independientes.</p>
           </div>
           <DashboardChart data={summary.trend} />
         </section>
