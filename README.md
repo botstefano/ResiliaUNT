@@ -92,19 +92,23 @@ En el SQL Editor, ejecutar en este orden:
 
 Luego, en **Project Settings → API → Exposed schemas**, agregar `oltp_resiliencia` y `datamart_resiliencia`, además de `public`. No exponer esquemas adicionales sin revisar permisos.
 
-### Asignar perfiles después del registro
+### Crear el primer administrador y habilitar cuentas
 
-El trigger crea todo usuario nuevo con rol `pendiente`. La activación de perfiles se realiza manualmente desde el SQL Editor, por un administrador autorizado del proyecto, asociando el UUID del usuario a un estudiante o terapeuta existente. No hay autoasignación de rol desde el formulario público.
-
-Ejemplo ilustrativo (reemplazar valores desde el panel seguro; no subir UUID reales al repositorio):
+El trigger crea todo usuario nuevo con rol `pendiente`. Crea o invita al primer usuario desde **Supabase → Authentication → Users**. El propietario del proyecto debe habilitar una sola vez el primer administrador desde SQL Editor, utilizando el correo de esa cuenta:
 
 ```sql
 update public.perfiles_app
-set rol = 'estudiante', id_estudiante = 123
-where id = 'UUID_DEL_USUARIO';
+set rol = 'administrador',
+    id_estudiante = null,
+    id_terapeuta = null,
+    nombre_visible = 'Administración ResiliaUNT'
+where id = (
+  select id from auth.users
+  where email = 'CORREO_DEL_PRIMER_ADMINISTRADOR'
+);
 ```
 
-Para un terapeuta, usar `rol = 'terapeuta'` e `id_terapeuta`. Para asignar estudiantes a ese terapeuta, insertar las relaciones en `oltp_resiliencia.terapeuta_estudiante`.
+Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` para habilitar cuentas como estudiante o terapeuta, vincularlas con registros institucionales y crear/cerrar asignaciones terapeuta–estudiante. Las asignaciones cerradas conservan su historial. No hay autoasignación de roles desde un formulario público. No promuevas cuentas a administrador salvo personal expresamente autorizado.
 
 ## Seguridad y datos
 
@@ -119,9 +123,11 @@ Para un terapeuta, usar `rol = 'terapeuta'` e `id_terapeuta`. Para asignar estud
 
 - Acceso con Supabase Auth; el usuario nuevo queda con rol `pendiente` hasta habilitación manual.
 - Portal estudiante: KPI personales, registro diario de hábitos, metas y consulta de sesiones propias.
-- Portal terapeuta: panel analítico, cartera de estudiantes asignados, Perfil 360 individual, registro de evaluaciones clínicas, valoración de red de apoyo trazable al profesional y programación de sesiones.
-- Rutas API con comprobación de rol y alcance; la clave `service_role` permanece en servidor.
+- Portal terapeuta: panel analítico, cartera asignada, Perfil 360 individual, evaluaciones clínicas, valoración de red de apoyo, programación y actualización de estado de sesiones, y selección de sala de terapia.
+- Portal administrador: habilitación de perfiles, vinculación de cuentas con estudiantes/terapeutas y administración de asignaciones con historial.
+- Rutas API con validación de entrada, comprobación de rol y alcance; la clave `service_role` permanece en servidor.
 - ETL con UPSERT de dimensiones y refresco transaccional de las cuatro tablas de hechos.
+- CI en GitHub Actions: instalación, TypeScript, pruebas unitarias, ESLint y build de producción.
 
 La guía paso a paso de Supabase, asignación de perfiles y despliegue en Render está en [`docs/GUIA_SUPABASE_RENDER.md`](docs/GUIA_SUPABASE_RENDER.md).
 
@@ -134,4 +140,4 @@ npm test
 npm run build
 ```
 
-La lógica de agregación KPI se comprobó con escenarios de valores controlados y casos sin denominador; Vitest queda disponible para su ejecución tras instalar dependencias. La instalación de dependencias npm excedió el límite del entorno, y aquí no hay PostgreSQL/Docker; por tanto no se declara aprobado `npm run build` ni se afirma que los SQL se hayan ejecutado en Supabase. La aplicación no está conectada todavía a un proyecto Supabase real ni desplegada en Render.
+La última ejecución de GitHub Actions sobre la rama `main` verificó correctamente `npm install`, `npm run typecheck`, `npm test`, `npm run lint` y `npm run build`. Esta validación comprueba el código de aplicación, pero no ejecuta los scripts SQL contra un proyecto PostgreSQL real. La aplicación todavía necesita conectarse al proyecto Supabase institucional y desplegarse en Render; por tanto, no se declara validada en producción.
