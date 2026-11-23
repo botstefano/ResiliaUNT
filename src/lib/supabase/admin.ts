@@ -1,13 +1,14 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 /** Cliente privilegiado; solo debe importarse desde módulos de servidor. */
 export function createSupabaseAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) throw new Error("Falta configurar la conexión administrativa de Supabase.");
-  return createClient(url, serviceKey, {
+  return createClient<Database>(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
