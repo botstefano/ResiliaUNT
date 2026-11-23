@@ -6,7 +6,7 @@ import Link from "next/link";
 
 type Student = { id_estudiante: number; codigo_universitario: string; nombre_visible: string; ciclo_academico: number | null; turno: string | null };
 type Room = { id_sala: number; codigo_sala: string; nombre_sala: string; pabellon: string | null; modalidad: string };
-type Session = { id_sesion: number; id_estudiante: number; inicio: string; estado: string; modalidad: string };
+type Session = { id_sesion: number; id_estudiante: number; id_sala: number | null; inicio: string; estado: string; modalidad: string; sala_terapia: { nombre_sala: string; pabellon: string | null } | null };
 type Tab = "clinical" | "support" | "session";
 
 export default function TherapistWorkspace() {
@@ -135,11 +135,13 @@ export default function TherapistWorkspace() {
             </select>
           </div>
 
-          {(tab === "clinical" || tab === "session") && <div className="md:col-span-2">
-            <label htmlFor="therapyRoom" className="mb-2 block text-sm font-medium">Sala de terapia (opcional)</label>
-            <select id="therapyRoom" value={roomId} onChange={(event) => setRoomId(event.target.value)} className="w-full rounded-xl border border-line px-3 py-3">
-              <option value="">Sin sala asignada</option>
-              {rooms.map((room) => <option key={room.id_sala} value={room.id_sala}>{room.nombre_sala} · {room.pabellon || "UNT"} · {room.modalidad}</option>)}
+          {(tab === "clinical" || (tab === "session" && modality !== "Virtual")) && <div className="md:col-span-2">
+            <label htmlFor="therapyRoom" className="mb-2 block text-sm font-medium">Sala de terapia {tab === "clinical" ? "(opcional)" : "(obligatoria)"}</label>
+            <select id="therapyRoom" value={roomId} required={tab === "session" && modality !== "Virtual"}
+              onChange={(event) => setRoomId(event.target.value)} className="w-full rounded-xl border border-line px-3 py-3">
+              <option value="">Selecciona una sala</option>
+              {rooms.filter((room) => tab === "clinical" || room.modalidad === modality)
+                .map((room) => <option key={room.id_sala} value={room.id_sala}>{room.nombre_sala} · {room.pabellon || "UNT"} · {room.modalidad}</option>)}
             </select>
           </div>}
 
@@ -163,7 +165,7 @@ export default function TherapistWorkspace() {
 
           {tab === "session" && <>
             <div><label htmlFor="sessionAt" className="mb-2 block text-sm font-medium">Fecha y hora</label><input id="sessionAt" type="datetime-local" value={sessionAt} onChange={(event) => setSessionAt(event.target.value)} required className="w-full rounded-xl border border-line px-3 py-3" /></div>
-            <div><label htmlFor="modality" className="mb-2 block text-sm font-medium">Modalidad</label><select id="modality" value={modality} onChange={(event) => setModality(event.target.value)} className="w-full rounded-xl border border-line px-3 py-3"><option>Presencial</option><option>Virtual</option><option>Mixta</option></select></div>
+            <div><label htmlFor="modality" className="mb-2 block text-sm font-medium">Modalidad</label><select id="modality" value={modality} onChange={(event) => { setModality(event.target.value); setRoomId(""); }} className="w-full rounded-xl border border-line px-3 py-3"><option>Presencial</option><option>Virtual</option><option>Mixta</option></select></div>
           </>}
 
           <div className="md:col-span-2">
@@ -177,7 +179,7 @@ export default function TherapistWorkspace() {
         <div className="mb-4"><h2 className="font-semibold">Próximas y recientes sesiones</h2><p className="mt-1 text-xs text-muted">Las sesiones están limitadas por la cartera autorizada de tu cuenta.</p></div>
         {sessions.length ? <div className="divide-y divide-line">
           {sessions.map((session) => <div key={session.id_sesion} className="flex flex-wrap justify-between gap-3 py-3 first:pt-0">
-            <div><p className="text-sm font-medium">{students.find((student) => student.id_estudiante === session.id_estudiante)?.nombre_visible || "Estudiante asignado"}</p><p className="mt-1 text-xs text-muted">{new Date(session.inicio).toLocaleString("es-PE", { dateStyle: "medium", timeStyle: "short" })} · {session.modalidad}</p></div>
+            <div><p className="text-sm font-medium">{students.find((student) => student.id_estudiante === session.id_estudiante)?.nombre_visible || "Estudiante asignado"}</p><p className="mt-1 text-xs text-muted">{new Date(session.inicio).toLocaleString("es-PE", { dateStyle: "medium", timeStyle: "short" })} · {session.modalidad}{session.sala_terapia ? " · " + session.sala_terapia.nombre_sala : ""}</p></div>
             <select aria-label="Estado de sesión" value={session.estado} disabled={saving}
               onChange={(event) => updateSessionStatus(session.id_sesion, event.target.value)}
               className="rounded-lg border border-line px-2 py-1 text-xs text-brand-700 disabled:opacity-50">

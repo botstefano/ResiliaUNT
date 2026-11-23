@@ -11,7 +11,7 @@ export async function GET() {
   if (!profile || !["estudiante", "terapeuta", "administrador"].includes(profile.rol)) return NextResponse.json({ error: "Sin permisos." }, { status: 403 });
 
   let query = supabase.schema("oltp_resiliencia").from("sesion_terapia")
-    .select("id_sesion, id_estudiante, inicio, fin, estado, modalidad")
+    .select("id_sesion, id_estudiante, id_sala, inicio, fin, estado, modalidad, sala_terapia(id_sala, nombre_sala, pabellon)")
     .order("inicio", { ascending: false }).limit(100);
   if (profile.rol === "estudiante" && profile.id_estudiante) query = query.eq("id_estudiante", profile.id_estudiante);
   if (profile.rol === "terapeuta" && profile.id_terapeuta) query = query.eq("id_terapeuta", profile.id_terapeuta);
@@ -30,6 +30,10 @@ export async function POST(request: Request) {
     inicio: z.string().datetime(),
     modalidad: z.enum(["Presencial", "Virtual", "Mixta"]),
     id_sala: z.number().int().positive().nullable().optional(),
+  }).superRefine((value, context) => {
+    if (value.modalidad !== "Virtual" && !value.id_sala) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ["id_sala"], message: "Selecciona una sala para sesiones presenciales o mixtas." });
+    }
   });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Datos de sesión inválidos." }, { status: 400 });
@@ -41,8 +45,11 @@ export async function POST(request: Request) {
 
   if (parsed.data.id_sala) {
     const { data: room } = await supabase.schema("oltp_resiliencia").from("sala_terapia")
-      .select("id_sala").eq("id_sala", parsed.data.id_sala).eq("activo", true).maybeSingle();
+      .select("id_sala, modalidad").eq("id_sala", parsed.data.id_sala).eq("activo", true).maybeSingle();
     if (!room) return NextResponse.json({ error: "La sala seleccionada no existe o está inactiva." }, { status: 400 });
+    if (room.modalidad !== parsed.data.modalidad) {
+      return NextResponse.json({ error: "La modalidad de la sala no coincide con la modalidad de la sesión." }, { status: 400 });
+    }
   }
 
   const { data, error } = await supabase.schema("oltp_resiliencia").from("sesion_terapia").insert({
@@ -52,7 +59,7 @@ export async function POST(request: Request) {
     inicio: parsed.data.inicio,
     modalidad: parsed.data.modalidad,
     estado: "Programada",
-  }).select("id_sesion, id_estudiante, inicio, estado, modalidad").single();
+  }).select("id_sesion, id_estudiante, id_sala, inicio, estado, modalidad, sala_terapia(id_sala, nombre_sala, pabellon)").single();
   if (error) return NextResponse.json({ error: "No se pudo programar la sesión." }, { status: 400 });
 
   const datamartRefreshed = await refreshDataMart();

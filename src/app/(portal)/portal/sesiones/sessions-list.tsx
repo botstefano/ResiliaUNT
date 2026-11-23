@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Session = { id_sesion: number; id_estudiante: number; inicio: string; fin: string | null; estado: string; modalidad: string };
+type Session = { id_sesion: number; id_estudiante: number; inicio: string; fin: string | null; estado: string; modalidad: string; sala_terapia: { nombre_sala: string; pabellon: string | null } | null };
 
 export default function SessionsList() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -32,7 +32,7 @@ export default function SessionsList() {
         {sessions.map((session) => <article key={session.id_sesion} className="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
           <div>
             <p className="text-sm font-semibold">{new Date(session.inicio).toLocaleString("es-PE", { dateStyle: "medium", timeStyle: "short" })}</p>
-            <p className="mt-1 text-xs text-muted">Modalidad {session.modalidad}</p>
+            <p className="mt-1 text-xs text-muted">Modalidad {session.modalidad}{session.sala_terapia ? " · " + session.sala_terapia.nombre_sala : ""}</p>
           </div>
           <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">{session.estado}</span>
         </article>)}

@@ -183,11 +183,27 @@ export async function POST(request: Request) {
     if (existingError) return NextResponse.json({ error: "No se pudo comprobar la asignación existente." }, { status: 500 });
     if (existing) return NextResponse.json({ assignment: existing, alreadyActive: true });
 
+    const requestedStart = parsed.data.fecha_inicio || todayInPeru();
+    const { data: history, error: historyError } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
+      .select("fecha_inicio, fecha_fin, activo")
+      .eq("id_terapeuta", parsed.data.id_terapeuta)
+      .eq("id_estudiante", parsed.data.id_estudiante)
+      .order("fecha_inicio", { ascending: false });
+    if (historyError) return NextResponse.json({ error: "No se pudo comprobar el historial de asignaciones." }, { status: 500 });
+    const latestClosedEnd = (history ?? [])
+      .filter((row) => !row.activo && row.fecha_fin)
+      .map((row) => row.fecha_fin as string)
+      .sort()
+      .at(-1);
+    if (latestClosedEnd && requestedStart <= latestClosedEnd) {
+      return NextResponse.json({ error: "La fecha de inicio debe ser posterior al último período de asignación cerrado (" + latestClosedEnd + ")." }, { status: 400 });
+    }
+
     const { data, error } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
       .insert({
         id_terapeuta: parsed.data.id_terapeuta,
         id_estudiante: parsed.data.id_estudiante,
-        fecha_inicio: parsed.data.fecha_inicio || todayInPeru(),
+        fecha_inicio: requestedStart,
         fecha_fin: null,
         activo: true,
       })
