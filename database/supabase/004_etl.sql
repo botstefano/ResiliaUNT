@@ -18,7 +18,7 @@ begin
     union
     select fecha from oltp_resiliencia.evaluacion_red_apoyo
     union
-    select inicio::date as fecha from oltp_resiliencia.sesion_terapia
+    select (inicio at time zone 'America/Lima')::date as fecha from oltp_resiliencia.sesion_terapia
   )
   insert into datamart_resiliencia.dim_tiempo
     (tiempo_key, fecha, dia, mes, nombre_mes, trimestre, anio)
