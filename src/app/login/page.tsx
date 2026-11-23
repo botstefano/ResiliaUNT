@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getAuthContext } from "@/lib/auth/context";
 import LoginForm from "./login-form";
 
@@ -26,6 +27,9 @@ export default async function LoginPage() {
           <h2 className="text-2xl font-semibold">Iniciar sesión</h2>
           <p className="mt-2 text-sm leading-6 text-muted">Accede con la cuenta institucional habilitada para el sistema.</p>
           <LoginForm />
+          <div className="mt-4 text-right">
+            <Link href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
+          </div>
           <p className="mt-8 rounded-xl bg-canvas p-4 text-xs leading-5 text-muted">
             El acceso requiere habilitación previa por un administrador. Las cuentas nuevas permanecen pendientes y no obtienen permisos automáticamente.
           </p>
