@@ -12,6 +12,7 @@ const schema = z.object({
   pensamientos_intrusivos: z.coerce.number().int().min(0),
   periodo_referencia_dias: z.coerce.number().int().min(1).max(365).default(30),
   cantidad_sesiones: z.coerce.number().int().min(0).max(1000).default(0),
+  id_sala: z.number().int().positive().nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -26,10 +27,16 @@ export async function POST(request: Request) {
     .eq("id_estudiante", parsed.data.id_estudiante).eq("activo", true).maybeSingle();
   if (!assignment) return NextResponse.json({ error: "El estudiante no pertenece a tu cartera asignada." }, { status: 403 });
 
+  if (parsed.data.id_sala) {
+    const { data: room } = await supabase.schema("oltp_resiliencia").from("sala_terapia")
+      .select("id_sala").eq("id_sala", parsed.data.id_sala).eq("activo", true).maybeSingle();
+    if (!room) return NextResponse.json({ error: "La sala seleccionada no existe o está inactiva." }, { status: 400 });
+  }
+
   const { data, error } = await supabase.schema("oltp_resiliencia").from("evaluacion_clinica").upsert({
     ...parsed.data,
     id_terapeuta: profile.id_terapeuta,
-    id_sala: null,
+    id_sala: parsed.data.id_sala ?? null,
   }, { onConflict: "id_estudiante,fecha" })
     .select("id_evaluacion, fecha, indice_resiliencia, pensamientos_intrusivos").single();
   if (error) return NextResponse.json({ error: "No se pudo registrar la evaluación. Comprueba permisos y datos." }, { status: 400 });
