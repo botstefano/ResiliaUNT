@@ -9,6 +9,7 @@
 - Creación y actualización de metas personales con una observación de estado por fecha.
 - Consulta de sesiones propias para el estudiante.
 - Vista de cartera, evaluaciones clínicas, evaluación de red de apoyo y programación de sesiones para terapeuta.
+- Perfil 360 por estudiante autorizado, con tendencias e historial de hábitos, metas, red de apoyo y sesiones.
 - APIs con validación de entrada, comprobación de perfil y uso de cliente Supabase vinculado a la sesión.
 - RLS como segunda capa de autorización en la base de datos.
 - Refresco del DataMart por RPC de servidor después de operaciones que generan hechos.
