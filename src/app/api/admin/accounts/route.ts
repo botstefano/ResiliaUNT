@@ -159,20 +159,31 @@ export async function POST(request: Request) {
 
   try {
     const admin = createSupabaseAdminClient();
+    const assignmentsTable = admin.schema("oltp_resiliencia").from("terapeuta_estudiante");
+    const { data: existing, error: existingError } = await assignmentsTable
+      .select("id_asignacion, id_terapeuta, id_estudiante, fecha_inicio, activo")
+      .eq("id_terapeuta", parsed.data.id_terapeuta)
+      .eq("id_estudiante", parsed.data.id_estudiante)
+      .eq("activo", true)
+      .maybeSingle();
+
+    if (existingError) return NextResponse.json({ error: "No se pudo comprobar la asignación existente." }, { status: 500 });
+    if (existing) return NextResponse.json({ assignment: existing, alreadyActive: true });
+
     const { data, error } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
-      .upsert({
+      .insert({
         id_terapeuta: parsed.data.id_terapeuta,
         id_estudiante: parsed.data.id_estudiante,
         fecha_inicio: parsed.data.fecha_inicio || todayInPeru(),
         fecha_fin: null,
         activo: true,
-      }, { onConflict: "id_terapeuta,id_estudiante" })
+      })
       .select("id_asignacion, id_terapeuta, id_estudiante, fecha_inicio, activo")
       .single();
 
     if (error) {
       console.error("Error creando asignación:", error.message);
-      return NextResponse.json({ error: "No se pudo asignar. Comprueba que ambos registros institucionales estén activos." }, { status: 400 });
+      return NextResponse.json({ error: "No se pudo asignar. Comprueba que ambos registros estén activos y que no exista otra asignación activa." }, { status: 400 });
     }
     return NextResponse.json({ assignment: data }, { status: 201 });
   } catch (error) {
@@ -196,18 +207,18 @@ export async function DELETE(request: Request) {
   try {
     const admin = createSupabaseAdminClient();
     const { data: existing, error: readError } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
-      .select("fecha_inicio, activo")
+      .select("id_asignacion, fecha_inicio, activo")
       .eq("id_terapeuta", parsed.data.id_terapeuta)
       .eq("id_estudiante", parsed.data.id_estudiante)
+      .eq("activo", true)
       .maybeSingle();
-    if (readError || !existing || !existing.activo) return NextResponse.json({ error: "No existe una asignación activa para cerrar." }, { status: 404 });
+    if (readError || !existing) return NextResponse.json({ error: "No existe una asignación activa para cerrar." }, { status: 404 });
 
     const today = todayInPeru();
     const endDate = today < existing.fecha_inicio ? existing.fecha_inicio : today;
     const { error } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
       .update({ activo: false, fecha_fin: endDate })
-      .eq("id_terapeuta", parsed.data.id_terapeuta)
-      .eq("id_estudiante", parsed.data.id_estudiante);
+      .eq("id_asignacion", existing.id_asignacion);
     if (error) return NextResponse.json({ error: "No se pudo cerrar la asignación." }, { status: 400 });
 
     return NextResponse.json({ ok: true });
