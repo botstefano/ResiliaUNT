@@ -144,6 +144,7 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 - Portal administrador: invitaciones por correo, habilitación de perfiles, vinculación de cuentas con estudiantes/terapeutas y administración de asignaciones con historial.
 - Rutas API con validación de entrada, comprobación de rol y alcance; la clave `service_role` permanece en servidor.
 - ETL con UPSERT de dimensiones y refresco transaccional de las cuatro tablas de hechos.
+- Exportación CSV de los KPI y variables complementarias, con agregados y sin identificadores personales.
 - CI en GitHub Actions: instalación, TypeScript, pruebas unitarias, ESLint y build de producción.
 
 La guía paso a paso de Supabase, asignación de perfiles y despliegue en Render está en [`docs/GUIA_SUPABASE_RENDER.md`](docs/GUIA_SUPABASE_RENDER.md).
