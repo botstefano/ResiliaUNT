@@ -43,25 +43,42 @@ Estas definiciones deben contrastarse con la rúbrica/instrumento oficial del pr
 ## Estructura
 
 ```text
- database/
-   supabase/
-     001_oltp.sql
-     002_datamart.sql
-     003_security_rls.sql
-     004_etl.sql
-     005_seed_demo.sql
-     006_validaciones_kpi.sql
- src/
-   app/
-     (portal)/
-     api/
-     login/
-     logout/
-   components/dashboard/
-   lib/
-     analytics/
-     supabase/
- tests/
+database/supabase/
+  001_oltp.sql
+  002_datamart.sql
+  003_security_rls.sql
+  004_etl.sql
+  005_seed_demo.sql
+  006_validaciones_kpi.sql
+  007_permisos_escritura_api.sql
+  008_meta_transaccional.sql
+  009_admin_asignaciones.sql
+docs/
+  GUIA_SUPABASE_RENDER.md
+  IMPLEMENTACION_ACTUAL.md
+src/app/
+  (portal)/portal/
+    admin/
+    habitos/
+    metas/
+    sesiones/
+    terapeuta/
+  api/
+    admin/
+    therapist/
+    habits/
+    goals/
+    sessions/
+  auth/callback/
+  forgot-password/
+  login/
+  reset-password/
+components/
+lib/
+  analytics/
+  auth/
+  supabase/
+tests/
 ```
 
 ## Instalación local
@@ -140,4 +157,4 @@ npm test
 npm run build
 ```
 
-La última ejecución de GitHub Actions sobre la rama `main` verificó correctamente `npm install`, `npm run typecheck`, `npm test`, `npm run lint` y `npm run build`. Esta validación comprueba el código de aplicación, pero no ejecuta los scripts SQL contra un proyecto PostgreSQL real. La aplicación todavía necesita conectarse al proyecto Supabase institucional y desplegarse en Render; por tanto, no se declara validada en producción.
+El workflow de GitHub Actions ejecuta `npm install`, `npm run typecheck`, `npm test`, `npm run lint` y `npm run build` ante cada actualización de `main`. Consulta la pestaña **Actions** para ver el resultado del commit más reciente. Esta validación comprueba el código de aplicación, pero no ejecuta los scripts SQL contra un proyecto PostgreSQL real. La aplicación todavía necesita conectarse al proyecto Supabase institucional y desplegarse en Render; por tanto, no se declara validada en producción.
