@@ -18,7 +18,7 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
 4. En **Project Settings → API → Exposed schemas**, agrega `oltp_resiliencia` y `datamart_resiliencia` junto con `public`. No agregues otros esquemas sin revisar sus permisos.
 5. En **Authentication → URL Configuration**, configura el dominio público de Render como Site URL y permite los redirect URLs de desarrollo y producción terminados en `/auth/callback` (por ejemplo `http://localhost:3000/auth/callback` y `https://TU-SERVICIO.onrender.com/auth/callback`). En producción usa exclusivamente HTTPS.
 6. Configura la plantilla de correo de recuperación de Supabase Auth y comprueba que su enlace redirija al callback de la aplicación.
-6. Mantén el registro público cerrado. Crea o invita usuarios mediante el procedimiento institucional aprobado; el trigger asigna inicialmente el rol `pendiente`.
+7. Mantén el registro público cerrado. Crea o invita usuarios mediante el procedimiento institucional aprobado; el trigger asigna inicialmente el rol `pendiente`.
 
 ## 2. Crear el primer administrador y gestionar accesos
 
