@@ -92,7 +92,7 @@ insert into oltp_resiliencia.registro_habito
   (id_estudiante, id_habito, fecha, intensidad, completado)
 select
   e.id_estudiante,
-  h.id_habito,
+  hb.id_habito,
   make_date(2026, m.mes, case when h.n = 1 then 5 else 20 end),
   case ((substring(e.codigo_universitario from 6)::integer + m.mes + h.n) % 3)
     when 0 then 'Alta' when 1 then 'Media' else 'Baja' end,
