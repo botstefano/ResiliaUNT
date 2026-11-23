@@ -5,7 +5,7 @@
 - Inicio de sesión con Supabase Auth y perfil pendiente hasta asignación administrativa.
 - Panel administrativo protegido para habilitar perfiles, vincular estudiantes/terapeutas y gestionar asignaciones con historial.
 - Separación de portal de estudiante y portal profesional según el rol de `perfiles_app`.
-- Tablero con los cuatro KPI oficiales, tendencia mensual y variables complementarias separadas.
+- Tablero con los cuatro KPI oficiales, tendencia mensual y variables complementarias separadas. El KPI de red activa utiliza la última valoración por estudiante dentro del período para evitar ponderación por frecuencia de evaluación.
 - Registro diario de hábitos por estudiante.
 - Creación y actualización de metas personales con una observación de estado por fecha.
 - Consulta de sesiones propias para el estudiante.
@@ -41,4 +41,5 @@
 - El seed contiene solamente datos sintéticos de demostración.
 - Los rangos y definiciones de los instrumentos deben ser confirmados por el responsable profesional e institucional antes de medir a estudiantes reales.
 - El código requiere configuración de un proyecto Supabase, revisión de RLS en ese proyecto y variables seguras en Render para ejecutarse de extremo a extremo.
+- El CI de GitHub Actions valida tipos, pruebas unitarias, lint y compilación de producción; todavía no se ha conectado ni probado contra un proyecto Supabase real.
 - Este commit no representa una validación de despliegue ni una autorización institucional para operar con datos reales.
