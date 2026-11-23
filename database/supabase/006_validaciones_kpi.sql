@@ -49,19 +49,32 @@ select
   (select count(*) from datamart_resiliencia.fact_red_apoyo f
     left join datamart_resiliencia.dim_terapeuta d using (terapeuta_key) where d.terapeuta_key is null) as huerfanos_terapeuta_red;
 
--- D. Cuatro KPI oficiales: una subconsulta por hecho, sin CROSS JOIN de tablas transaccionales.
-with kpi_clinico as (
+-- D. Cuatro KPI oficiales del mismo período móvil de 12 meses del portal.
+-- El KPI 4 toma la última valoración por estudiante; las evaluaciones repetidas
+-- no aumentan el peso de una persona en el numerador ni en el denominador.
+with parametros as (
   select
-    avg(indice_resiliencia)::numeric as resiliencia_promedio,
-    avg((pensamientos_intrusivos::numeric / nullif(periodo_referencia_dias, 0)) * 30)
+    (date_trunc('month', (now() at time zone 'America/Lima')::date) - interval '11 months')::date as fecha_inicio,
+    (now() at time zone 'America/Lima')::date as fecha_fin
+),
+kpi_clinico as (
+  select
+    avg(f.indice_resiliencia)::numeric as resiliencia_promedio,
+    avg((f.pensamientos_intrusivos::numeric / nullif(f.periodo_referencia_dias, 0)) * 30)
       as pensamientos_intrusivos_por_30_dias
-  from datamart_resiliencia.fact_evaluacion_clinica
+  from datamart_resiliencia.fact_evaluacion_clinica f
+  join datamart_resiliencia.dim_tiempo t using (tiempo_key)
+  cross join parametros p
+  where t.fecha between p.fecha_inicio and p.fecha_fin
 ),
 ultimo_estado_meta as (
-  select distinct on (id_meta_oltp)
-    id_meta_oltp, metas_cumplidas, metas_pendientes
-  from datamart_resiliencia.fact_seguimiento_meta
-  order by id_meta_oltp, tiempo_key desc
+  select distinct on (f.id_meta_oltp)
+    f.id_meta_oltp, f.metas_cumplidas, f.metas_pendientes
+  from datamart_resiliencia.fact_seguimiento_meta f
+  join datamart_resiliencia.dim_tiempo t using (tiempo_key)
+  cross join parametros p
+  where t.fecha between p.fecha_inicio and p.fecha_fin
+  order by f.id_meta_oltp, f.tiempo_key desc, f.seguimiento_key desc
 ),
 kpi_metas as (
   select
@@ -69,13 +82,24 @@ kpi_metas as (
       nullif(count(*), 0) as cumplimiento_metas_pct
   from ultimo_estado_meta
 ),
+ultima_red_por_estudiante as (
+  select distinct on (f.estudiante_key)
+    f.estudiante_key, f.red_key, f.contactos_activos, f.interacciones_sociales,
+    f.tiempo_key, f.red_apoyo_fact_key
+  from datamart_resiliencia.fact_red_apoyo f
+  join datamart_resiliencia.dim_tiempo t using (tiempo_key)
+  cross join parametros p
+  where t.fecha between p.fecha_inicio and p.fecha_fin
+  order by f.estudiante_key, f.tiempo_key desc, f.red_apoyo_fact_key desc
+),
 kpi_red as (
   select
     100.0 * count(*) filter (where d.red_apoyo_activa is true)::numeric /
       nullif(count(*), 0) as red_apoyo_activa_pct,
-    avg(contactos_activos)::numeric as contactos_activos_promedio,
-    avg(interacciones_sociales)::numeric as interacciones_promedio
-  from datamart_resiliencia.fact_red_apoyo f
+    avg(u.contactos_activos)::numeric as contactos_activos_promedio,
+    avg(u.interacciones_sociales)::numeric as interacciones_promedio,
+    count(*) as estudiantes_con_valoracion_red
+  from ultima_red_por_estudiante u
   join datamart_resiliencia.dim_red_apoyo d using (red_key)
 )
 select
@@ -84,7 +108,8 @@ select
   round(m.cumplimiento_metas_pct, 2) as kpi_3_cumplimiento_metas_pct,
   round(r.red_apoyo_activa_pct, 2) as kpi_4_red_apoyo_activa_pct,
   round(r.contactos_activos_promedio, 2) as contactos_activos_promedio,
-  round(r.interacciones_promedio, 2) as interacciones_sociales_promedio
+  round(r.interacciones_promedio, 2) as interacciones_sociales_promedio,
+  r.estudiantes_con_valoracion_red
 from kpi_clinico k
 cross join kpi_metas m
 cross join kpi_red r;
