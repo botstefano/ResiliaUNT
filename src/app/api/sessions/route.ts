@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     id_estudiante: z.coerce.number().int().positive(),
     inicio: z.string().datetime(),
     modalidad: z.enum(["Presencial", "Virtual", "Mixta"]),
+    id_sala: z.number().int().positive().nullable().optional(),
   });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Datos de sesión inválidos." }, { status: 400 });
@@ -38,9 +39,16 @@ export async function POST(request: Request) {
     .eq("id_estudiante", parsed.data.id_estudiante).eq("activo", true).maybeSingle();
   if (!assignment) return NextResponse.json({ error: "El estudiante no pertenece a tu cartera asignada." }, { status: 403 });
 
+  if (parsed.data.id_sala) {
+    const { data: room } = await supabase.schema("oltp_resiliencia").from("sala_terapia")
+      .select("id_sala").eq("id_sala", parsed.data.id_sala).eq("activo", true).maybeSingle();
+    if (!room) return NextResponse.json({ error: "La sala seleccionada no existe o está inactiva." }, { status: 400 });
+  }
+
   const { data, error } = await supabase.schema("oltp_resiliencia").from("sesion_terapia").insert({
     id_estudiante: parsed.data.id_estudiante,
     id_terapeuta: profile.id_terapeuta,
+    id_sala: parsed.data.id_sala ?? null,
     inicio: parsed.data.inicio,
     modalidad: parsed.data.modalidad,
     estado: "Programada",
