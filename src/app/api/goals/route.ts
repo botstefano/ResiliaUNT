@@ -65,7 +65,7 @@ export async function PUT(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Datos de estado inválidos." }, { status: 400 });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInPeru();
   const { error } = await supabase.schema("oltp_resiliencia").from("registro_meta").upsert(
     { id_meta: parsed.data.id_meta, fecha: today, estado: parsed.data.estado },
     { onConflict: "id_meta,fecha" },
