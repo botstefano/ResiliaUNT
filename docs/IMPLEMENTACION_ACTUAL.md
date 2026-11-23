@@ -11,6 +11,8 @@
 - Vista de cartera, evaluaciones clínicas, evaluación de red de apoyo y programación de sesiones para terapeuta.
 - Perfil 360 por estudiante autorizado, con tendencias e historial de hábitos, metas, red de apoyo y sesiones.
 - APIs con validación de entrada, comprobación de perfil y uso de cliente Supabase vinculado a la sesión.
+- Consultas explícitas a los esquemas PostgreSQL `oltp_resiliencia` y `datamart_resiliencia` desde Supabase JS.
+- Creación atómica de metas y de su primer estado, sin dejar metas parcialmente insertadas.
 - RLS como segunda capa de autorización en la base de datos.
 - Refresco del DataMart por RPC de servidor después de operaciones que generan hechos.
 - Pruebas unitarias de las funciones de normalización y cálculo de KPI.
@@ -23,9 +25,10 @@
 2. `002_datamart.sql`
 3. `003_security_rls.sql`
 4. `007_permisos_escritura_api.sql` — permisos mínimos de escritura para evaluaciones y sesiones.
-5. `004_etl.sql`
-6. `005_seed_demo.sql` — opcional, solo en desarrollo.
-7. `006_validaciones_kpi.sql`
+5. `008_meta_transaccional.sql` — crea una meta y su estado inicial en una transacción.
+6. `004_etl.sql`
+7. `005_seed_demo.sql` — opcional, solo en desarrollo.
+8. `006_validaciones_kpi.sql`
 
 ## Límites que siguen vigentes
 
