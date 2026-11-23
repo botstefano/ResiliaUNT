@@ -117,7 +117,7 @@ Para un terapeuta, usar `rol = 'terapeuta'` e `id_terapeuta`. Para asignar estud
 
 - Acceso con Supabase Auth; el usuario nuevo queda con rol `pendiente` hasta habilitación manual.
 - Portal estudiante: KPI personales, registro diario de hábitos, metas y consulta de sesiones propias.
-- Portal terapeuta: panel analítico, cartera de estudiantes asignados, registro de evaluaciones clínicas, valoración de red de apoyo trazable al profesional y programación de sesiones.
+- Portal terapeuta: panel analítico, cartera de estudiantes asignados, Perfil 360 individual, registro de evaluaciones clínicas, valoración de red de apoyo trazable al profesional y programación de sesiones.
 - Rutas API con comprobación de rol y alcance; la clave `service_role` permanece en servidor.
 - ETL con UPSERT de dimensiones y refresco transaccional de las cuatro tablas de hechos.
 
