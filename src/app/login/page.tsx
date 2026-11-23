@@ -5,7 +5,7 @@ import LoginForm from "./login-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams?: { error?: string } }) {
   const { user } = await getAuthContext();
   if (user) redirect("/portal");
   return (
@@ -26,6 +26,11 @@ export default async function LoginPage() {
           </div>
           <h2 className="text-2xl font-semibold">Iniciar sesión</h2>
           <p className="mt-2 text-sm leading-6 text-muted">Accede con la cuenta institucional habilitada para el sistema.</p>
+          {searchParams?.error === "auth_callback_failed" && (
+            <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              El enlace de autenticación no pudo validarse o ha expirado. Solicita un nuevo enlace.
+            </p>
+          )}
           <LoginForm />
           <div className="mt-4 text-right">
             <Link href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
