@@ -21,15 +21,16 @@ export async function GET() {
 
   try {
     const admin = createSupabaseAdminClient();
-    const [profilesResult, studentsResult, therapistsResult, assignmentsResult, usersResult] = await Promise.all([
+    const [profilesResult, studentsResult, therapistsResult, roomsResult, assignmentsResult, usersResult] = await Promise.all([
       admin.from("perfiles_app").select("id, rol, id_estudiante, id_terapeuta, nombre_visible, created_at").order("created_at", { ascending: false }),
       admin.schema("oltp_resiliencia").from("estudiante").select("id_estudiante, codigo_universitario, nombre_visible, activo").eq("activo", true).order("nombre_visible"),
       admin.schema("oltp_resiliencia").from("terapeuta").select("id_terapeuta, codigo_terapeuta, nombre, activo").eq("activo", true).order("nombre"),
+      admin.schema("oltp_resiliencia").from("sala_terapia").select("id_sala, codigo_sala, nombre_sala, pabellon, modalidad, capacidad, activo").eq("activo", true).order("nombre_sala"),
       admin.schema("oltp_resiliencia").from("terapeuta_estudiante").select("id_asignacion, id_terapeuta, id_estudiante, fecha_inicio, fecha_fin, activo").order("created_at", { ascending: false }),
       admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     ]);
 
-    const errors = [profilesResult.error, studentsResult.error, therapistsResult.error, assignmentsResult.error, usersResult.error].filter(Boolean);
+    const errors = [profilesResult.error, studentsResult.error, therapistsResult.error, roomsResult.error, assignmentsResult.error, usersResult.error].filter(Boolean);
     if (errors.length) {
       console.error("Error consultando administración ResiliaUNT:", errors);
       return NextResponse.json({ error: "No se pudieron cargar los datos administrativos." }, { status: 500 });
@@ -60,6 +61,7 @@ export async function GET() {
       accounts,
       students: studentsResult.data ?? [],
       therapists: therapistsResult.data ?? [],
+      rooms: roomsResult.data ?? [],
       assignments,
       note: (usersResult.data.users ?? []).length >= 1000
         ? "La lista de identidades está limitada a las primeras 1000 cuentas."
