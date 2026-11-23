@@ -83,9 +83,10 @@ En el SQL Editor, ejecutar en este orden:
 1. `database/supabase/001_oltp.sql`
 2. `database/supabase/002_datamart.sql`
 3. `database/supabase/003_security_rls.sql`
-4. `database/supabase/004_etl.sql`
-5. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
-6. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
+4. `database/supabase/007_permisos_escritura_api.sql` (permisos mínimos de escritura para el portal profesional).
+5. `database/supabase/004_etl.sql`
+6. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
+7. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
 
 Luego, en **Project Settings → API → Exposed schemas**, agregar `oltp_resiliencia` y `datamart_resiliencia`, además de `public`. No exponer esquemas adicionales sin revisar permisos.
 
