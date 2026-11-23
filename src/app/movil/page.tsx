@@ -5,10 +5,11 @@ import StudentDemoLogin from "./student-demo-login";
 
 export const dynamic = "force-dynamic";
 
-export default async function MobileEntryPage() {
+export default async function MobileEntryPage({ searchParams }: { searchParams?: { switch?: string } }) {
   const { user, profile } = await getAuthContext();
+  const switchingStudent = searchParams?.switch === "1";
 
-  if (user && profile?.rol === "estudiante" && profile.id_estudiante) {
+  if (user && profile?.rol === "estudiante" && profile.id_estudiante && !switchingStudent) {
     redirect("/movil/estudiante");
   }
 
@@ -26,7 +27,7 @@ export default async function MobileEntryPage() {
         <section className="rounded-2xl border border-line bg-white p-4 shadow-soft sm:p-5">
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-[.14em] text-brand-700">Entorno de demostración</p>
-            <h2 className="mt-1 text-xl font-semibold text-ink">Ingresar como estudiante</h2>
+            <h2 className="mt-1 text-xl font-semibold text-ink">{switchingStudent ? "Cambiar de estudiante" : "Ingresar como estudiante"}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
               Selecciona uno de los perfiles sintéticos para explorar su portal personal. Esta aplicación no ofrece acceso de terapeuta.
             </p>
@@ -43,10 +44,8 @@ export default async function MobileEntryPage() {
         <section className="rounded-2xl border border-line bg-white p-4">
           <h2 className="text-sm font-semibold text-ink">¿Tienes una cuenta personal habilitada?</h2>
           <p className="mt-1 text-xs leading-5 text-muted">También puedes iniciar sesión con una cuenta vinculada al rol de estudiante.</p>
-          <Link
-            href="/login?next=%2Fmovil%2Festudiante"
-            className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-brand-700 px-4 py-3 text-sm font-semibold text-brand-700"
-          >
+          <Link href="/login?next=%2Fmovil%2Festudiante"
+            className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-brand-700 px-4 py-3 text-sm font-semibold text-brand-700">
             Iniciar sesión con mi cuenta
           </Link>
         </section>

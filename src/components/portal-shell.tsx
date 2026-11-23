@@ -68,7 +68,7 @@ export default function PortalShell({ children, role, displayName, isDemo = fals
         <div className="mx-auto max-w-7xl">
           {isDemo && <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
             <span><strong>Modo de demostración.</strong> Todos los registros son sintéticos; los cambios solo modifican el entorno demo.</span>
-            <Link href={isMobileStudent ? "/movil" : "/demo"} className="font-semibold underline">
+            <Link href={isMobileStudent ? "/movil?switch=1" : "/demo"} className="font-semibold underline">
               {isMobileStudent ? "Cambiar estudiante" : "Cambiar perfil"}
             </Link>
           </div>}
