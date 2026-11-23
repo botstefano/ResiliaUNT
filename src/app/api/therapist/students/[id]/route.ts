@@ -15,7 +15,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   if (profile.rol === "terapeuta") {
     if (!profile.id_terapeuta) return NextResponse.json({ error: "Perfil profesional incompleto." }, { status: 403 });
-    const { data: assignment } = await supabase.from("terapeuta_estudiante")
+    const { data: assignment } = await supabase.schema("oltp_resiliencia").from("terapeuta_estudiante")
       .select("id_asignacion")
       .eq("id_terapeuta", profile.id_terapeuta)
       .eq("id_estudiante", studentId)
@@ -24,18 +24,18 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     if (!assignment) return NextResponse.json({ error: "No tienes acceso al estudiante solicitado." }, { status: 403 });
   }
 
-  const { data: student, error: studentError } = await supabase.from("estudiante")
+  const { data: student, error: studentError } = await supabase.schema("oltp_resiliencia").from("estudiante")
     .select("id_estudiante, codigo_universitario, nombre_visible, ciclo_academico, turno")
     .eq("id_estudiante", studentId).maybeSingle();
   if (studentError || !student) return NextResponse.json({ error: "No se encontró el estudiante o no tienes acceso." }, { status: 404 });
 
   const [clinical, habits, goals, networks, sessions, habitCatalog] = await Promise.all([
-    supabase.from("evaluacion_clinica").select("fecha, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias, cantidad_sesiones").eq("id_estudiante", studentId).order("fecha", { ascending: false }).limit(24),
-    supabase.from("registro_habito").select("fecha, id_habito, intensidad, completado").eq("id_estudiante", studentId).order("fecha", { ascending: false }).limit(60),
-    supabase.from("meta_personal").select("id_meta, categoria, descripcion, fecha_objetivo, activa").eq("id_estudiante", studentId).eq("activa", true).order("fecha_creacion", { ascending: false }),
-    supabase.from("evaluacion_red_apoyo").select("fecha, red_apoyo_activa, contactos_activos, interacciones_sociales, periodo_referencia_dias").eq("id_estudiante", studentId).order("fecha", { ascending: false }).limit(24),
-    supabase.from("sesion_terapia").select("inicio, estado, modalidad").eq("id_estudiante", studentId).order("inicio", { ascending: false }).limit(20),
-    supabase.from("habito").select("id_habito, nombre").eq("activo", true),
+    supabase.schema("oltp_resiliencia").from("evaluacion_clinica").select("fecha, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias, cantidad_sesiones").eq("id_estudiante", studentId).order("fecha", { ascending: false }).limit(24),
+    supabase.schema("oltp_resiliencia").from("registro_habito").select("fecha, id_habito, intensidad, completado").eq("id_estudiante", studentId).order("fecha", { ascending: false }).limit(60),
+    supabase.schema("oltp_resiliencia").from("meta_personal").select("id_meta, categoria, descripcion, fecha_objetivo, activa").eq("id_estudiante", studentId).eq("activa", true).order("fecha_creacion", { ascending: false }),
+    supabase.schema("oltp_resiliencia").from("evaluacion_red_apoyo").select("fecha, red_apoyo_activa, contactos_activos, interacciones_sociales, periodo_referencia_dias").eq("id_estudiante", studentId).order("fecha", { ascending: false }).limit(24),
+    supabase.schema("oltp_resiliencia").from("sesion_terapia").select("inicio, estado, modalidad").eq("id_estudiante", studentId).order("inicio", { ascending: false }).limit(20),
+    supabase.schema("oltp_resiliencia").from("habito").select("id_habito, nombre").eq("activo", true),
   ]);
 
   if ([clinical, habits, goals, networks, sessions, habitCatalog].some((result) => result.error)) {
@@ -45,7 +45,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const goalIds = (goals.data ?? []).map((goal) => goal.id_meta);
   let goalRecords: Array<{ id_meta: number; fecha: string; estado: string }> = [];
   if (goalIds.length) {
-    const result = await supabase.from("registro_meta").select("id_meta, fecha, estado")
+    const result = await supabase.schema("oltp_resiliencia").from("registro_meta").select("id_meta, fecha, estado")
       .in("id_meta", goalIds).order("fecha", { ascending: false });
     if (result.error) return NextResponse.json({ error: "No se pudo consultar el historial de metas." }, { status: 500 });
     goalRecords = result.data ?? [];
