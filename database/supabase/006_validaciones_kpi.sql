@@ -50,22 +50,31 @@ select
     left join datamart_resiliencia.dim_terapeuta d using (terapeuta_key) where d.terapeuta_key is null) as huerfanos_terapeuta_red;
 
 -- D. Cuatro KPI oficiales del mismo período móvil de 12 meses del portal.
--- El KPI 4 toma la última valoración por estudiante; las evaluaciones repetidas
--- no aumentan el peso de una persona en el numerador ni en el denominador.
+-- KPI 1 y 2: una evaluación más reciente por estudiante.
+-- KPI 3: último estado de cada meta.
+-- KPI 4: última valoración de red por estudiante.
 with parametros as (
   select
     (date_trunc('month', (now() at time zone 'America/Lima')::date) - interval '11 months')::date as fecha_inicio,
     (now() at time zone 'America/Lima')::date as fecha_fin
 ),
-kpi_clinico as (
-  select
-    avg(f.indice_resiliencia)::numeric as resiliencia_promedio,
-    avg((f.pensamientos_intrusivos::numeric / nullif(f.periodo_referencia_dias, 0)) * 30)
-      as pensamientos_intrusivos_por_30_dias
+ultima_evaluacion_por_estudiante as (
+  select distinct on (f.estudiante_key)
+    f.estudiante_key, f.indice_resiliencia, f.pensamientos_intrusivos,
+    f.periodo_referencia_dias, f.tiempo_key, f.eval_key
   from datamart_resiliencia.fact_evaluacion_clinica f
   join datamart_resiliencia.dim_tiempo t using (tiempo_key)
   cross join parametros p
   where t.fecha between p.fecha_inicio and p.fecha_fin
+  order by f.estudiante_key, f.tiempo_key desc, f.eval_key desc
+),
+kpi_clinico as (
+  select
+    avg(indice_resiliencia)::numeric as resiliencia_promedio,
+    avg((pensamientos_intrusivos::numeric / nullif(periodo_referencia_dias, 0)) * 30)
+      as pensamientos_intrusivos_por_30_dias,
+    count(*) as estudiantes_evaluados
+  from ultima_evaluacion_por_estudiante
 ),
 ultimo_estado_meta as (
   select distinct on (f.id_meta_oltp)
@@ -109,6 +118,7 @@ select
   round(r.red_apoyo_activa_pct, 2) as kpi_4_red_apoyo_activa_pct,
   round(r.contactos_activos_promedio, 2) as contactos_activos_promedio,
   round(r.interacciones_promedio, 2) as interacciones_sociales_promedio,
+  k.estudiantes_evaluados,
   r.estudiantes_con_valoracion_red
 from kpi_clinico k
 cross join kpi_metas m
@@ -126,39 +136,68 @@ join datamart_resiliencia.dim_estudiante de using (estudiante_key)
 group by de.ciclo_academico
 order by de.ciclo_academico;
 
--- F. Hábitos vs evaluaciones: primero agrega cada lado a estudiante-año-mes.
--- Esta consulta es exploratoria/descriptiva; no demuestra causalidad.
-with habitos_mes as (
+-- F. Correlaciones exploratorias hábitos–indicadores, con la misma unidad
+-- de análisis del portal: una observación agregada por estudiante.
+-- Solo se muestran coeficientes cuando hay al menos 10 estudiantes emparejados.
+with parametros as (
+  select
+    (date_trunc('month', (now() at time zone 'America/Lima')::date) - interval '11 months')::date as fecha_inicio,
+    (now() at time zone 'America/Lima')::date as fecha_fin
+),
+habitos_mes as (
   select
     f.estudiante_key,
     t.anio,
     t.mes,
-    h.nombre as habito,
-    sum(f.completado_count) as dias_completados
+    100.0 * sum(f.completado_count)::numeric / nullif(count(*), 0) as cumplimiento_habitos_pct
   from datamart_resiliencia.fact_registro_habitos f
   join datamart_resiliencia.dim_tiempo t using (tiempo_key)
-  join datamart_resiliencia.dim_habito h using (habito_key)
-  group by f.estudiante_key, t.anio, t.mes, h.nombre
+  cross join parametros p
+  where t.fecha between p.fecha_inicio and p.fecha_fin
+  group by f.estudiante_key, t.anio, t.mes
 ),
 evaluaciones_mes as (
   select
     f.estudiante_key,
     t.anio,
     t.mes,
+    avg(f.indice_resiliencia)::numeric as resiliencia,
     avg((f.pensamientos_intrusivos::numeric / nullif(f.periodo_referencia_dias, 0)) * 30)
       as intrusivos_por_30_dias
   from datamart_resiliencia.fact_evaluacion_clinica f
   join datamart_resiliencia.dim_tiempo t using (tiempo_key)
+  cross join parametros p
+  where t.fecha between p.fecha_inicio and p.fecha_fin
   group by f.estudiante_key, t.anio, t.mes
+),
+emparejados_mes as (
+  select
+    h.estudiante_key,
+    h.cumplimiento_habitos_pct,
+    e.resiliencia,
+    e.intrusivos_por_30_dias
+  from habitos_mes h
+  join evaluaciones_mes e
+    on e.estudiante_key = h.estudiante_key
+    and e.anio = h.anio
+    and e.mes = h.mes
+),
+resumen_estudiante as (
+  select
+    estudiante_key,
+    avg(cumplimiento_habitos_pct) as cumplimiento_habitos_pct,
+    avg(resiliencia) as resiliencia,
+    avg(intrusivos_por_30_dias) as intrusivos_por_30_dias
+  from emparejados_mes
+  group by estudiante_key
 )
 select
-  h.habito,
-  sum(h.dias_completados) as dias_completados,
-  round(avg(e.intrusivos_por_30_dias), 2) as intrusivos_promedio_asociado
-from habitos_mes h
-join evaluaciones_mes e
-  on e.estudiante_key = h.estudiante_key
-  and e.anio = h.anio
-  and e.mes = h.mes
-group by h.habito
-order by h.habito;
+  count(*) as estudiantes_emparejados,
+  case when count(*) >= 10 then corr(cumplimiento_habitos_pct, resiliencia) end
+    as correlacion_habitos_resiliencia,
+  case when count(*) >= 10 then corr(cumplimiento_habitos_pct, intrusivos_por_30_dias) end
+    as correlacion_habitos_intrusivos
+from resumen_estudiante;
+
+-- Interpretar estas asociaciones como descriptivas, no causales. No equivalen
+-- a una prueba de significancia ni a una evaluación individual.
