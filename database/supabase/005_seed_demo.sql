@@ -52,7 +52,7 @@ join oltp_resiliencia.terapeuta t
 where e.codigo_universitario like 'DEMO-%'
 on conflict (id_terapeuta, id_estudiante) do update set activo = excluded.activo;
 
--- Una evaluación por estudiante y mes del año sintético 2025.
+-- Una evaluación por estudiante y mes del año sintético 2026 (enero a octubre).
 insert into oltp_resiliencia.evaluacion_clinica
   (id_estudiante, id_terapeuta, id_sala, fecha, indice_resiliencia,
    pensamientos_intrusivos, periodo_referencia_dias, cantidad_sesiones)
@@ -60,13 +60,13 @@ select
   e.id_estudiante,
   t.id_terapeuta,
   s.id_sala,
-  make_date(2025, m.mes, 15),
+  make_date(2026, m.mes, 15),
   (45 + ((substring(e.codigo_universitario from 6)::integer * 7 + m.mes * 3) % 50))::numeric(5,2),
   ((substring(e.codigo_universitario from 6)::integer + m.mes * 2) % 9),
   30,
   ((m.mes + substring(e.codigo_universitario from 6)::integer) % 4) + 1
 from oltp_resiliencia.estudiante e
-cross join generate_series(1, 12) as m(mes)
+cross join generate_series(1, 10) as m(mes)
 join oltp_resiliencia.terapeuta t
   on t.codigo_terapeuta = case
     when substring(e.codigo_universitario from 6)::integer % 2 = 0 then 'DEMO-TER-01'
@@ -87,12 +87,12 @@ insert into oltp_resiliencia.registro_habito
 select
   e.id_estudiante,
   h.id_habito,
-  make_date(2025, m.mes, case when h.n = 1 then 5 else 20 end),
+  make_date(2026, m.mes, case when h.n = 1 then 5 else 20 end),
   case ((substring(e.codigo_universitario from 6)::integer + m.mes + h.n) % 3)
     when 0 then 'Alta' when 1 then 'Media' else 'Baja' end,
   ((substring(e.codigo_universitario from 6)::integer + m.mes + h.n) % 2 = 0)
 from oltp_resiliencia.estudiante e
-cross join generate_series(1, 12) as m(mes)
+cross join generate_series(1, 10) as m(mes)
 cross join (values (1, 'DEMO-HAB-01'), (2, 'DEMO-HAB-02')) as h(n, codigo)
 join oltp_resiliencia.habito hb on hb.codigo_habito = h.codigo
 where e.codigo_universitario like 'DEMO-%'
@@ -108,8 +108,8 @@ select
   e.id_estudiante,
   case n when 1 then 'Bienestar' else 'Organización personal' end,
   'Meta demostrativa ' || n,
-  date '2025-01-01',
-  date '2025-12-31'
+  date '2026-01-01',
+  date '2026-12-31'
 from oltp_resiliencia.estudiante e
 cross join generate_series(1, 2) as g(n)
 where e.codigo_universitario like 'DEMO-%'
@@ -118,14 +118,14 @@ on conflict (codigo_meta) do nothing;
 insert into oltp_resiliencia.registro_meta (id_meta, fecha, estado)
 select
   mp.id_meta,
-  make_date(2025, m.mes, 25),
+  make_date(2026, m.mes, 25),
   case
     when (substring(e.codigo_universitario from 6)::integer + m.mes +
           substring(mp.codigo_meta from length(mp.codigo_meta) for 1)::integer) % 3 = 0
     then 'Cumplida' else 'Pendiente' end
 from oltp_resiliencia.meta_personal mp
 join oltp_resiliencia.estudiante e on e.id_estudiante = mp.id_estudiante
-cross join generate_series(1, 12) as m(mes)
+cross join generate_series(1, 10) as m(mes)
 where mp.codigo_meta like 'DEMO-META-%'
 on conflict (id_meta, fecha) do update set estado = excluded.estado;
 
@@ -135,7 +135,7 @@ insert into oltp_resiliencia.evaluacion_red_apoyo
 select
   e.id_estudiante,
   t.id_terapeuta,
-  make_date(2025, m.mes, 28),
+  make_date(2026, m.mes, 28),
   30,
   ((substring(e.codigo_universitario from 6)::integer + m.mes) % 4 <> 0),
   ((substring(e.codigo_universitario from 6)::integer + m.mes) % 4),
@@ -145,7 +145,7 @@ join oltp_resiliencia.terapeuta t
   on t.codigo_terapeuta = case
     when substring(e.codigo_universitario from 6)::integer % 2 = 0 then 'DEMO-TER-01'
     else 'DEMO-TER-02' end
-cross join generate_series(1, 12) as m(mes)
+cross join generate_series(1, 10) as m(mes)
 where e.codigo_universitario like 'DEMO-%'
 on conflict (id_estudiante, fecha) do update set
   id_terapeuta = excluded.id_terapeuta,
