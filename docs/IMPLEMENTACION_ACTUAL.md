@@ -3,7 +3,7 @@
 ## Base funcional añadida
 
 - Inicio de sesión y recuperación de contraseña con Supabase Auth; el perfil nuevo queda pendiente hasta asignación administrativa.
-- Panel administrativo protegido para habilitar perfiles, vincular estudiantes/terapeutas y gestionar asignaciones con historial.
+- Panel administrativo protegido para invitar usuarios por correo, habilitar perfiles, vincular estudiantes/terapeutas y gestionar asignaciones con historial.
 - Separación de portal de estudiante y portal profesional según el rol de `perfiles_app`.
 - Tablero con los cuatro KPI oficiales, tendencia mensual y variables complementarias separadas. El KPI de red activa utiliza la última valoración por estudiante dentro del período para evitar ponderación por frecuencia de evaluación.
 - Correlaciones exploratorias de Pearson hábitos–resiliencia y hábitos–pensamientos intrusivos. Las observaciones mensuales se agregan por estudiante antes de calcular, se exige un mínimo de 10 estudiantes con datos emparejados y se presentan como asociaciones descriptivas, no causales.
