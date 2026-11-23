@@ -96,7 +96,7 @@ select
   make_date(2026, m.mes, case when h.n = 1 then 5 else 20 end),
   case ((substring(e.codigo_universitario from 6)::integer + m.mes + h.n) % 3)
     when 0 then 'Alta' when 1 then 'Media' else 'Baja' end,
-  ((substring(e.codigo_universitario from 6)::integer + m.mes + h.n) % 2 = 0)
+  ((substring(e.codigo_universitario from 6)::integer * 7 + m.mes * 13 + h.n * 5 + substring(e.codigo_universitario from 6)::integer * m.mes) % 7 < 4)
 from oltp_resiliencia.estudiante e
 cross join generate_series(1, 10) as m(mes)
 cross join (values (1, 'DEMO-HAB-01'), (2, 'DEMO-HAB-02')) as h(n, codigo)
