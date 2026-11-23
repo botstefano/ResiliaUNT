@@ -46,9 +46,10 @@
 - El seed contiene solamente datos sintéticos de demostración.
 - Los rangos y definiciones de los instrumentos deben ser confirmados por el responsable profesional e institucional antes de medir a estudiantes reales.
 - El proyecto Supabase `ResiliaUNT` está conectado; se aplicaron las migraciones 001–004, 007–011 y se cargó el seed exclusivamente sintético.
+- El primer perfil administrador ya fue habilitado en Supabase Auth después de comprobar que el correo estaba confirmado. La base registra un administrador y no quedan perfiles pendientes.
 - La base contiene 40 estudiantes demo, 400 evaluaciones clínicas, 800 registros de hábitos, 80 metas, 800 estados de meta y 400 valoraciones de red de apoyo. Los cuatro hechos del DataMart fueron cotejados con OLTP y no se detectaron claves huérfanas.
 - RLS está habilitado en todas las tablas de la aplicación; los asesores de seguridad y salud de Supabase no reportan avisos. Los índices de soporte de claves foráneas se añadieron en la migración 011.
-- El propietario del proyecto confirmó que `oltp_resiliencia` y `datamart_resiliencia` ya están agregados a **API → Exposed schemas**. `resilia_private` debe permanecer sin exponer. Quedan pendientes la configuración de URL/callbacks de Auth, la creación de la cuenta administradora inicial, las variables de entorno de Render y las pruebas E2E con cuentas separadas.
+- El propietario del proyecto confirmó que `oltp_resiliencia` y `datamart_resiliencia` ya están agregados a **API → Exposed schemas**. `resilia_private` debe permanecer sin exponer. Quedan pendientes la configuración de URL/callbacks de Auth, las variables de entorno de Render y las pruebas E2E con cuentas separadas.
 - El CI de GitHub Actions valida tipos, pruebas unitarias, lint y compilación de producción; no reemplaza las pruebas E2E del despliegue.
 - El repositorio mantiene visibilidad pública; como el contenido actual es sintético puede conservarse así. Nunca subir datos personales ni credenciales.
 - Este commit no representa una validación de despliegue ni una autorización institucional para operar con datos reales.
