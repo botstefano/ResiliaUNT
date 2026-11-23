@@ -55,6 +55,7 @@ database/supabase/
   009_admin_asignaciones.sql
   010_hardening_rls.sql
   011_foreign_key_indexes.sql
+  012_generador_demo_completo.sql
 docs/
   GUIA_SUPABASE_RENDER.md
   IMPLEMENTACION_ACTUAL.md
@@ -93,7 +94,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Completar `.env.local` con URL y clave pública/anon de Supabase. La `SUPABASE_SERVICE_ROLE_KEY` es solo de servidor y debe mantenerse secreta.
+Completar `.env.local` con URL y clave pública/anon de Supabase. La `SUPABASE_SERVICE_ROLE_KEY` es solo de servidor y debe mantenerse secreta. Para activar el selector sintético, configura `DEMO_MODE_ENABLED=true` y un `DEMO_SESSION_SECRET` aleatorio de al menos 32 bytes.
 
 ## Preparación de Supabase
 
@@ -108,8 +109,9 @@ En el SQL Editor, ejecutar en este orden:
 7. `database/supabase/004_etl.sql`
 8. `database/supabase/010_hardening_rls.sql` — helpers internos y políticas de autorización endurecidas.
 9. `database/supabase/011_foreign_key_indexes.sql` — índices de soporte para las relaciones.
-10. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
-11. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
+10. Opcional, únicamente para desarrollo inicial: `database/supabase/005_seed_demo.sql`
+11. Para el conjunto sintético completo: `database/supabase/012_generador_demo_completo.sql`. Es idempotente y amplía la simulación a 200 estudiantes, 2,400 evaluaciones, más de 21,000 hábitos, metas, red de apoyo y sesiones; conserva los datos existentes y refresca el DataMart.
+12. Revisa `database/supabase/006_validaciones_kpi.sql`.
 
 Luego, en **Project Settings → API → Exposed schemas**, mantener `public` y agregar `oltp_resiliencia` y `datamart_resiliencia`. No exponer `resilia_private`, que contiene funciones internas de autorización.
 
@@ -139,6 +141,10 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 - Las tablas OLTP y del DataMart tienen RLS. Las consultas privilegiadas de servidor deben comprobar usuario, rol y estudiantes asignados antes de usar la clave `service_role`.
 - No almacenar notas clínicas narrativas, diagnósticos o relatos traumáticos en campos libres de esta primera versión.
 - Antes de producción: revisión de privacidad institucional, consentimiento informado, retención/eliminación, protocolo de incidentes, accesibilidad, autorización de responsables del servicio y revisión profesional de instrumentos.
+
+## Modo de demostración
+
+Con `DEMO_MODE_ENABLED=true` y `DEMO_SESSION_SECRET` configurado solo en el servidor, la ruta `/demo` permite entrar como uno de los 200 estudiantes o uno de los tres terapeutas sintéticos, sin crear usuarios en Supabase Auth. La sesión temporal se firma en servidor y caduca a las 4 horas. Cada estudiante ve y modifica solo sus datos; cada terapeuta consulta su cartera activa asignada. No existe identidad demo de administrador. Mantén el modo deshabilitado para entornos con datos reales.
 
 ## Módulos implementados en esta primera base
 

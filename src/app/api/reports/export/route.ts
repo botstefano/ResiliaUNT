@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/auth/context";
 import { getDashboardSummary } from "@/lib/analytics/dashboard";
+import { getVisibleStudentIds } from "@/lib/analytics/scope";
 import { todayInPeru } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,8 @@ export async function GET() {
     const [year, month] = today.split("-").map(Number);
     const firstDay = new Date(Date.UTC(year, month - 1 - 11, 1));
     const periodStart = firstDay.toISOString().slice(0, 10);
-    const summary = await getDashboardSummary(supabase);
+    const visibleIds = await getVisibleStudentIds(supabase, profile.rol, profile.id_estudiante, profile.id_terapeuta);
+    const summary = await getDashboardSummary(supabase, visibleIds);
 
     const rows: Array<Array<string | number | null>> = [
       ["Fecha de generación", today],

@@ -32,6 +32,13 @@ export default async function LoginPage({ searchParams }: { searchParams?: { err
             </p>
           )}
           <LoginForm />
+          {process.env.DEMO_MODE_ENABLED === "true" && <div className="mt-7 rounded-xl border border-line p-4">
+            <p className="text-sm font-semibold">¿Quieres probar el prototipo?</p>
+            <p className="mt-1 text-xs leading-5 text-muted">Usa identidades sintéticas sin crear cuentas institucionales.</p>
+            <Link href="/demo" className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-brand-600 px-4 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
+              Entrar al modo de demostración
+            </Link>
+          </div>}
           <div className="mt-4 text-right">
             <Link href="/forgot-password" className="text-sm font-medium text-brand-700 hover:underline">¿Olvidaste tu contraseña?</Link>
           </div>

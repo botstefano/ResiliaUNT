@@ -3,7 +3,7 @@ import { average, latestByKey, normalizeTo30Days, pearsonCorrelation, percentage
 import { todayInPeru } from "@/lib/dates";
 
 type ClinicalRow = { tiempo_key: number; estudiante_key: number; indice_resiliencia: number; pensamientos_intrusivos: number; periodo_referencia_dias: number };
-type GoalRow = { id_meta_oltp: number; tiempo_key: number; metas_cumplidas: number; metas_pendientes: number };
+type GoalRow = { id_meta_oltp: number; estudiante_key: number; tiempo_key: number; metas_cumplidas: number; metas_pendientes: number };
 type NetworkRow = { tiempo_key: number; estudiante_key: number; red_key: number; contactos_activos: number; interacciones_sociales: number };
 type HabitRow = { tiempo_key: number; estudiante_key: number; completado_count: number };
 type NetworkDimension = { red_key: number; red_apoyo_activa: boolean | null };
@@ -57,7 +57,16 @@ export const emptyDashboard: DashboardSummary = {
   habitResilienceCorrelation: null, habitIntrusiveCorrelation: null, habitAssociationStudents: 0, trend: [],
 };
 
-export async function getDashboardSummary(supabase: SupabaseClient): Promise<DashboardSummary> {
+export async function getDashboardSummary(supabase: SupabaseClient, visibleStudentIds?: number[]): Promise<DashboardSummary> {
+  let visibleStudentKeys: number[] | null = null;
+  if (visibleStudentIds !== undefined) {
+    if (!visibleStudentIds.length) return emptyDashboard;
+    const { data: dimensions, error: dimensionError } = await supabase.schema("datamart_resiliencia")
+      .from("dim_estudiante").select("estudiante_key").in("id_estudiante_oltp", visibleStudentIds);
+    if (dimensionError) throw new Error("No se pudo resolver el alcance de estudiantes del DataMart.");
+    visibleStudentKeys = (dimensions ?? []).map((row) => Number(row.estudiante_key));
+    if (!visibleStudentKeys.length) return emptyDashboard;
+  }
   const today = todayInPeru();
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
@@ -66,18 +75,30 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   const toKey = Number(today.replaceAll("-", ""));
 
   const [clinical, goals, network, habits] = await Promise.all([
-    fetchAllRows<ClinicalRow>(() => supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica")
-      .select("tiempo_key, estudiante_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias")
-      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("eval_key") as unknown as RangeableQuery<ClinicalRow>),
-    fetchAllRows<GoalRow>(() => supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta")
-      .select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes")
-      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("seguimiento_key") as unknown as RangeableQuery<GoalRow>),
-    fetchAllRows<NetworkRow>(() => supabase.schema("datamart_resiliencia").from("fact_red_apoyo")
-      .select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales")
-      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("red_apoyo_fact_key") as unknown as RangeableQuery<NetworkRow>),
-    fetchAllRows<HabitRow>(() => supabase.schema("datamart_resiliencia").from("fact_registro_habitos")
-      .select("tiempo_key, estudiante_key, completado_count")
-      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("registro_key") as unknown as RangeableQuery<HabitRow>),
+    fetchAllRows<ClinicalRow>(() => {
+      const base = supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica")
+        .select("tiempo_key, estudiante_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias");
+      const scoped = visibleStudentKeys ? base.in("estudiante_key", visibleStudentKeys) : base;
+      return scoped.gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("eval_key") as unknown as RangeableQuery<ClinicalRow>;
+    }),
+    fetchAllRows<GoalRow>(() => {
+      const base = supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta")
+        .select("id_meta_oltp, estudiante_key, tiempo_key, metas_cumplidas, metas_pendientes");
+      const scoped = visibleStudentKeys ? base.in("estudiante_key", visibleStudentKeys) : base;
+      return scoped.gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("seguimiento_key") as unknown as RangeableQuery<GoalRow>;
+    }),
+    fetchAllRows<NetworkRow>(() => {
+      const base = supabase.schema("datamart_resiliencia").from("fact_red_apoyo")
+        .select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales");
+      const scoped = visibleStudentKeys ? base.in("estudiante_key", visibleStudentKeys) : base;
+      return scoped.gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("red_apoyo_fact_key") as unknown as RangeableQuery<NetworkRow>;
+    }),
+    fetchAllRows<HabitRow>(() => {
+      const base = supabase.schema("datamart_resiliencia").from("fact_registro_habitos")
+        .select("tiempo_key, estudiante_key, completado_count");
+      const scoped = visibleStudentKeys ? base.in("estudiante_key", visibleStudentKeys) : base;
+      return scoped.gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("registro_key") as unknown as RangeableQuery<HabitRow>;
+    }),
   ]);
   const redKeys = [...new Set(network.map((row) => row.red_key))];
   let networkDimensions: NetworkDimension[] = [];

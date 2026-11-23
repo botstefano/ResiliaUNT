@@ -20,8 +20,11 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const date = url.searchParams.get("fecha") || todayInPeru();
+  let habitQuery = supabase.schema("oltp_resiliencia").from("habito")
+    .select("id_habito, nombre, categoria").eq("activo", true).order("nombre");
+  if (profile.isDemo) habitQuery = habitQuery.like("codigo_habito", "DEMO-HAB-%");
   const [habitsResult, recordsResult] = await Promise.all([
-    supabase.schema("oltp_resiliencia").from("habito").select("id_habito, nombre, categoria").eq("activo", true).order("nombre"),
+    habitQuery,
     supabase.schema("oltp_resiliencia").from("registro_habito").select("id_registro_habito, id_habito, fecha, intensidad, completado").eq("id_estudiante", profile.id_estudiante).eq("fecha", date).order("id_habito"),
   ]);
   if (habitsResult.error || recordsResult.error) return NextResponse.json({ error: "No se pudieron cargar los hábitos." }, { status: 500 });
@@ -35,6 +38,13 @@ export async function POST(request: Request) {
 
   const parsed = habitSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Datos de hábito inválidos." }, { status: 400 });
+
+  if (profile.isDemo) {
+    const { data: demoHabit } = await supabase.schema("oltp_resiliencia").from("habito")
+      .select("id_habito").eq("id_habito", parsed.data.id_habito)
+      .like("codigo_habito", "DEMO-HAB-%").eq("activo", true).maybeSingle();
+    if (!demoHabit) return NextResponse.json({ error: "El hábito no pertenece al catálogo de demostración." }, { status: 403 });
+  }
 
   const payload = { ...parsed.data, id_estudiante: profile.id_estudiante };
   const { data, error } = await supabase.schema("oltp_resiliencia").from("registro_habito")

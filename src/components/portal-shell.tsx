@@ -6,9 +6,9 @@ import { Activity, BarChart3, CalendarDays, HeartHandshake, LogOut, ShieldCheck,
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/auth/context";
 
-type Props = { children: React.ReactNode; role: AppRole; displayName: string };
+type Props = { children: React.ReactNode; role: AppRole; displayName: string; isDemo?: boolean };
 
-export default function PortalShell({ children, role, displayName }: Props) {
+export default function PortalShell({ children, role, displayName, isDemo = false }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const links = [
@@ -21,7 +21,11 @@ export default function PortalShell({ children, role, displayName }: Props) {
   ].filter((item) => item.show);
 
   async function signOut() {
-    await createSupabaseBrowserClient().auth.signOut();
+    if (isDemo) {
+      await fetch("/api/demo/session", { method: "DELETE" });
+    } else {
+      await createSupabaseBrowserClient().auth.signOut();
+    }
     router.replace("/login");
     router.refresh();
   }
@@ -55,6 +59,10 @@ export default function PortalShell({ children, role, displayName }: Props) {
       </aside>
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-7 md:ml-64 md:px-10 md:py-9">
         <div className="mx-auto max-w-7xl">
+          {isDemo && <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+            <span><strong>Modo de demostración.</strong> Todos los registros son sintéticos; los cambios solo modifican el entorno demo.</span>
+            <Link href="/demo" className="font-semibold underline">Cambiar perfil</Link>
+          </div>}
           <div className="mb-6 flex items-center justify-between md:hidden">
             <span className="truncate text-xs text-muted">{displayName}</span>
             <button onClick={signOut} className="flex items-center gap-1 text-xs text-muted"><LogOut size={14} /> Salir</button>

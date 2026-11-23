@@ -24,5 +24,5 @@ export default async function PortalLayout({ children }: { children: React.React
   }
 
   const displayName = profile.nombre_visible || user.email || "Usuario ResiliaUNT";
-  return <PortalShell role={profile.rol} displayName={displayName}>{children}</PortalShell>;
+  return <PortalShell role={profile.rol} displayName={displayName} isDemo={profile.isDemo === true}>{children}</PortalShell>;
 }

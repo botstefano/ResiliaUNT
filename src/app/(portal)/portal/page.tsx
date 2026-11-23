@@ -2,6 +2,7 @@ import MetricCard from "@/components/metric-card";
 import DashboardChart from "@/components/dashboard-chart";
 import { getAuthContext } from "@/lib/auth/context";
 import { emptyDashboard, getDashboardSummary } from "@/lib/analytics/dashboard";
+import { getVisibleStudentIds } from "@/lib/analytics/scope";
 
 const format = (value: number | null, suffix = "") => value === null ? "—" : value.toFixed(1) + suffix;
 
@@ -10,7 +11,10 @@ export default async function PortalHomePage() {
   let summary = emptyDashboard;
   let loadError = "";
   try {
-    summary = await getDashboardSummary(supabase);
+    const visibleIds = profile
+      ? await getVisibleStudentIds(supabase, profile.rol, profile.id_estudiante, profile.id_terapeuta)
+      : [];
+    summary = await getDashboardSummary(supabase, visibleIds);
   } catch (error) {
     loadError = error instanceof Error ? error.message : "No se pudo cargar el resumen.";
   }

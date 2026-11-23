@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
@@ -46,13 +47,40 @@ export async function POST(request: Request) {
   const parsed = createGoalSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Revisa la categoría, descripción y fecha objetivo." }, { status: 400 });
 
-  const { data: idMeta, error } = await supabase.rpc("crear_meta_personal_resilia", {
-    p_categoria: parsed.data.categoria,
-    p_descripcion: parsed.data.descripcion,
-    p_fecha_objetivo: parsed.data.fecha_objetivo || null,
-    p_fecha_estado: todayInPeru(),
-  });
-  if (error || !idMeta) return NextResponse.json({ error: "No se pudo crear la meta y su estado inicial. Comprueba que aplicaste 008_meta_transaccional.sql." }, { status: 400 });
+  const today = todayInPeru();
+  let idMeta: number | null = null;
+
+  if (profile.isDemo) {
+    const { data: createdGoal, error: goalError } = await supabase.schema("oltp_resiliencia")
+      .from("meta_personal").insert({
+        codigo_meta: "DUI-" + randomUUID(),
+        id_estudiante: profile.id_estudiante,
+        categoria: parsed.data.categoria,
+        descripcion: parsed.data.descripcion,
+        fecha_creacion: today,
+        fecha_objetivo: parsed.data.fecha_objetivo || null,
+        activa: true,
+      }).select("id_meta").single();
+    if (goalError || !createdGoal) return NextResponse.json({ error: "No se pudo crear la meta de demostración." }, { status: 400 });
+
+    const { error: stateError } = await supabase.schema("oltp_resiliencia").from("registro_meta")
+      .insert({ id_meta: createdGoal.id_meta, fecha: today, estado: "Pendiente" });
+    if (stateError) {
+      await supabase.schema("oltp_resiliencia").from("meta_personal")
+        .update({ activa: false }).eq("id_meta", createdGoal.id_meta).eq("id_estudiante", profile.id_estudiante);
+      return NextResponse.json({ error: "La meta se creó, pero no se pudo guardar su estado inicial." }, { status: 400 });
+    }
+    idMeta = Number(createdGoal.id_meta);
+  } else {
+    const { data, error } = await supabase.rpc("crear_meta_personal_resilia", {
+      p_categoria: parsed.data.categoria,
+      p_descripcion: parsed.data.descripcion,
+      p_fecha_objetivo: parsed.data.fecha_objetivo || null,
+      p_fecha_estado: today,
+    });
+    if (error || !data) return NextResponse.json({ error: "No se pudo crear la meta y su estado inicial. Comprueba que aplicaste 008_meta_transaccional.sql." }, { status: 400 });
+    idMeta = Number(data);
+  }
 
   const datamartRefreshed = await refreshDataMart();
   return NextResponse.json({ id_meta: idMeta, datamartRefreshed }, { status: 201 });
@@ -66,6 +94,10 @@ export async function PUT(request: Request) {
   const schema = z.object({ id_meta: z.coerce.number().int().positive(), estado: z.enum(["Cumplida", "Pendiente"]) });
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Datos de estado inválidos." }, { status: 400 });
+
+  const { data: ownedGoal, error: ownershipError } = await supabase.schema("oltp_resiliencia").from("meta_personal")
+    .select("id_meta").eq("id_meta", parsed.data.id_meta).eq("id_estudiante", profile.id_estudiante).eq("activa", true).maybeSingle();
+  if (ownershipError || !ownedGoal) return NextResponse.json({ error: "La meta no pertenece a tu perfil o ya no está activa." }, { status: 403 });
 
   const today = todayInPeru();
   const { error } = await supabase.schema("oltp_resiliencia").from("registro_meta").upsert(
