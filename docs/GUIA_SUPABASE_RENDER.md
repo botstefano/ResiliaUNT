@@ -11,6 +11,7 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
    - `database/supabase/003_security_rls.sql`
    - `database/supabase/007_permisos_escritura_api.sql`
    - `database/supabase/008_meta_transaccional.sql`
+   - `database/supabase/009_admin_asignaciones.sql`
    - `database/supabase/004_etl.sql`
    - `database/supabase/005_seed_demo.sql` solo si se trata de un entorno de demostración.
 3. Ejecuta `database/supabase/006_validaciones_kpi.sql` después del ETL para revisar conteos, fechas, relaciones y KPI.
@@ -18,30 +19,28 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
 5. En **Authentication → URL Configuration**, configura el dominio del proyecto y el dominio de la app. En producción usa exclusivamente HTTPS.
 6. Mantén el registro público cerrado. Crea o invita usuarios mediante el procedimiento institucional aprobado; el trigger asigna inicialmente el rol `pendiente`.
 
-## 2. Asignar perfiles
+## 2. Crear el primer administrador y gestionar accesos
 
-El identificador de Supabase Auth debe vincularse a un estudiante o terapeuta existente. Ejecuta estas operaciones desde SQL Editor con privilegios administrativos, reemplazando los valores en el proyecto real y nunca copiando los UUID reales al repositorio:
+Las cuentas se crean o invitan primero desde **Supabase → Authentication → Users**. El trigger crea automáticamente un perfil con rol `pendiente`.
+
+Solo para habilitar al primer administrador del sistema, el propietario del proyecto debe ejecutar una vez en SQL Editor, sustituyendo el correo de ejemplo por el correo real de la cuenta creada:
 
 ```sql
--- Ejemplo para habilitar a un estudiante:
 update public.perfiles_app
-set rol = 'estudiante', id_estudiante = 123, id_terapeuta = null
-where id = 'UUID_AUTH_DEL_USUARIO';
-
--- Ejemplo para habilitar a un profesional:
-update public.perfiles_app
-set rol = 'terapeuta', id_terapeuta = 10, id_estudiante = null
-where id = 'UUID_AUTH_DEL_USUARIO';
-
--- Ejemplo para asignar estudiantes a un profesional:
-insert into oltp_resiliencia.terapeuta_estudiante
-  (id_terapeuta, id_estudiante, fecha_inicio, activo)
-values (10, 123, current_date, true)
-on conflict (id_terapeuta, id_estudiante)
-do update set activo = true, fecha_fin = null;
+set rol = 'administrador',
+    id_estudiante = null,
+    id_terapeuta = null,
+    nombre_visible = 'Administración ResiliaUNT'
+where id = (
+  select id
+  from auth.users
+  where email = 'CORREO_DEL_PRIMER_ADMINISTRADOR'
+);
 ```
 
-El usuario administrador del sistema se configura con `rol = 'administrador'` y ambos identificadores de entidad en `null`. No habilites administración desde un formulario público.
+Comprueba que se haya actualizado exactamente una fila y vuelve a iniciar sesión. Después, entra a **/portal/admin**: desde el panel podrás habilitar cuentas como estudiante o terapeuta, vincularlas al registro institucional y asignar/cerrar relaciones terapeuta–estudiante.
+
+La clave `SUPABASE_SERVICE_ROLE_KEY` solo se utiliza en rutas del servidor. Cada operación administrativa valida primero que la sesión autenticada tenga rol `administrador`. El panel protege contra la retirada accidental del único administrador activo.
 
 ## 3. Ejecutar localmente
 
