@@ -22,6 +22,21 @@ export async function GET() {
     ]);
 
     if (students.error || therapists.error) {
+      // El detalle queda únicamente en los logs privados de Render.
+      console.error("Error consultando perfiles sintéticos:", {
+        students: students.error ? {
+          code: students.error.code,
+          message: students.error.message,
+          details: students.error.details,
+          hint: students.error.hint,
+        } : null,
+        therapists: therapists.error ? {
+          code: therapists.error.code,
+          message: therapists.error.message,
+          details: therapists.error.details,
+          hint: therapists.error.hint,
+        } : null,
+      });
       return NextResponse.json({ error: "No se pudieron cargar los perfiles sintéticos." }, { status: 500 });
     }
     return NextResponse.json({ students: students.data ?? [], therapists: therapists.data ?? [] }, {
