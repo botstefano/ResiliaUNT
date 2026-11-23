@@ -4,7 +4,9 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function LoginForm() {
+type LoginFormProps = { redirectTo?: string };
+
+export default function LoginForm({ redirectTo = "/portal" }: LoginFormProps) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +21,8 @@ export default function LoginForm() {
       const supabase = createSupabaseBrowserClient();
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
-      router.replace("/portal");
+      const safeDestination = redirectTo === "/movil/estudiante" ? "/movil/estudiante" : "/portal";
+      router.replace(safeDestination);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión.");
@@ -31,7 +34,7 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-5">
       <div>
-        <label htmlFor="email" className="mb-2 block text-sm font-medium">Correo institucional</label>
+        <label htmlFor="email" className="mb-2 block text-sm font-medium">Correo electrónico</label>
         <input id="email" type="email" autoComplete="username" required value={email}
           onChange={(event) => setEmail(event.target.value)}
           className="w-full rounded-xl border border-line px-4 py-3 outline-none focus:border-brand-500" />
