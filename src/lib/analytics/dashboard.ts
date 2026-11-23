@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { average, normalizeTo30Days, percentage } from "@/lib/analytics/kpi";
+import { average, latestByKey, normalizeTo30Days, percentage } from "@/lib/analytics/kpi";
 import { todayInPeru } from "@/lib/dates";
 
 type ClinicalRow = { tiempo_key: number; indice_resiliencia: number; pensamientos_intrusivos: number; periodo_referencia_dias: number };
 type GoalRow = { id_meta_oltp: number; tiempo_key: number; metas_cumplidas: number; metas_pendientes: number };
-type NetworkRow = { tiempo_key: number; red_key: number; contactos_activos: number; interacciones_sociales: number };
+type NetworkRow = { tiempo_key: number; estudiante_key: number; red_key: number; contactos_activos: number; interacciones_sociales: number };
 type NetworkDimension = { red_key: number; red_apoyo_activa: boolean | null };
 
 export type DashboardSummary = {
@@ -17,6 +17,7 @@ export type DashboardSummary = {
   evaluationsCount: number;
   goalsCount: number;
   supportEvaluationsCount: number;
+  supportStudentsCount: number;
   trend: Array<{ month: string; resilience: number | null; intrusive: number | null }>;
 };
 
@@ -24,7 +25,7 @@ const dateKey = (date: Date) => Number(date.toISOString().slice(0, 10).replaceAl
 export const emptyDashboard: DashboardSummary = {
   resilience: null, intrusivePer30Days: null, goalCompletionPct: null, activeSupportPct: null,
   activeContactsAvg: null, interactionsAvg: null, evaluationsCount: 0, goalsCount: 0,
-  supportEvaluationsCount: 0, trend: [],
+  supportEvaluationsCount: 0, supportStudentsCount: 0, trend: [],
 };
 
 export async function getDashboardSummary(supabase: SupabaseClient): Promise<DashboardSummary> {
@@ -38,7 +39,7 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   const [clinicalResult, goalsResult, networkResult] = await Promise.all([
     supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica").select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
     supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta").select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
-    supabase.schema("datamart_resiliencia").from("fact_red_apoyo").select("tiempo_key, red_key, contactos_activos, interacciones_sociales").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
+    supabase.schema("datamart_resiliencia").from("fact_red_apoyo").select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
   ]);
 
   if (clinicalResult.error || goalsResult.error || networkResult.error) {
@@ -65,7 +66,10 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   const goalStates = [...latestGoalState.values()];
 
   const activeMap = new Map(networkDimensions.map((row) => [row.red_key, row.red_apoyo_activa]));
-  const activeNetworks = network.filter((row) => activeMap.get(row.red_key) === true);
+  // El KPI usa la última valoración de cada estudiante: evaluaciones repetidas
+  // no aumentan el peso de una persona en el denominador.
+  const latestNetworks = latestByKey(network, (row) => row.estudiante_key, (row) => row.tiempo_key);
+  const activeNetworks = latestNetworks.filter((row) => activeMap.get(row.red_key) === true);
 
   const byMonth = new Map<number, { resilience: number[]; intrusive: number[] }>();
   clinical.forEach((row) => {
@@ -88,12 +92,13 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     resilience: average(clinical.map((row) => Number(row.indice_resiliencia))),
     intrusivePer30Days: average(clinical.map((row) => normalizeTo30Days(Number(row.pensamientos_intrusivos), Number(row.periodo_referencia_dias)) ?? 0)),
     goalCompletionPct: percentage(goalStates.filter((row) => Number(row.metas_cumplidas) === 1).length, goalStates.length),
-    activeSupportPct: percentage(activeNetworks.length, network.length),
-    activeContactsAvg: average(network.map((row) => Number(row.contactos_activos))),
-    interactionsAvg: average(network.map((row) => Number(row.interacciones_sociales))),
+    activeSupportPct: percentage(activeNetworks.length, latestNetworks.length),
+    activeContactsAvg: average(latestNetworks.map((row) => Number(row.contactos_activos))),
+    interactionsAvg: average(latestNetworks.map((row) => Number(row.interacciones_sociales))),
     evaluationsCount: clinical.length,
     goalsCount: goalStates.length,
     supportEvaluationsCount: network.length,
+    supportStudentsCount: latestNetworks.length,
     trend,
   };
 }
