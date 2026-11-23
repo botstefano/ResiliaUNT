@@ -48,3 +48,30 @@ export async function POST(request: Request) {
   const datamartRefreshed = await refreshDataMart();
   return NextResponse.json({ session: data, datamartRefreshed }, { status: 201 });
 }
+
+
+export async function PATCH(request: Request) {
+  const { supabase, user, profile } = await getAuthContext();
+  if (!user) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
+  if (profile?.rol !== "terapeuta" || !profile.id_terapeuta) {
+    return NextResponse.json({ error: "Solo un terapeuta puede actualizar el estado de una sesión." }, { status: 403 });
+  }
+
+  const schema = z.object({
+    id_sesion: z.coerce.number().int().positive(),
+    estado: z.enum(["Programada", "Realizada", "Cancelada", "No asistió"]),
+  });
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Estado de sesión inválido." }, { status: 400 });
+
+  const { data, error } = await supabase.from("sesion_terapia")
+    .update({ estado: parsed.data.estado })
+    .eq("id_sesion", parsed.data.id_sesion)
+    .eq("id_terapeuta", profile.id_terapeuta)
+    .select("id_sesion, estado")
+    .maybeSingle();
+
+  if (error || !data) return NextResponse.json({ error: "No se pudo actualizar. Verifica que la sesión esté asignada a tu perfil." }, { status: 400 });
+  const datamartRefreshed = await refreshDataMart();
+  return NextResponse.json({ session: data, datamartRefreshed });
+}
