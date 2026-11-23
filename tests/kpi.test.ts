@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { average, latestByKey, normalizeTo30Days, percentage } from "../src/lib/analytics/kpi";
+import { average, latestByKey, normalizeTo30Days, pearsonCorrelation, percentage } from "../src/lib/analytics/kpi";
 
 describe("cálculo de indicadores ResiliaUNT", () => {
   it("devuelve null cuando no hay observaciones", () => {
@@ -33,5 +33,21 @@ describe("cálculo de indicadores ResiliaUNT", () => {
     expect(latest).toHaveLength(2);
     expect(latest.find((row) => row.student === 1)?.active).toBe(false);
     expect(latest.find((row) => row.student === 2)?.active).toBe(true);
+  });
+
+  it("calcula una correlación positiva perfecta", () => {
+    const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    expect(pearsonCorrelation(values, values)).toBeCloseTo(1, 8);
+  });
+
+  it("calcula una correlación negativa perfecta", () => {
+    const x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const y = [...x].reverse();
+    expect(pearsonCorrelation(x, y)).toBeCloseTo(-1, 8);
+  });
+
+  it("no informa correlación con menos de diez pares o sin variabilidad", () => {
+    expect(pearsonCorrelation([1, 2, 3], [2, 4, 6])).toBeNull();
+    expect(pearsonCorrelation(Array(10).fill(1), Array(10).fill(3))).toBeNull();
   });
 });

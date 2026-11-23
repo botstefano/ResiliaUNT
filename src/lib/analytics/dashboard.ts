@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { average, latestByKey, normalizeTo30Days, percentage } from "@/lib/analytics/kpi";
+import { average, latestByKey, normalizeTo30Days, pearsonCorrelation, percentage } from "@/lib/analytics/kpi";
 import { todayInPeru } from "@/lib/dates";
 
-type ClinicalRow = { tiempo_key: number; indice_resiliencia: number; pensamientos_intrusivos: number; periodo_referencia_dias: number };
+type ClinicalRow = { tiempo_key: number; estudiante_key: number; indice_resiliencia: number; pensamientos_intrusivos: number; periodo_referencia_dias: number };
 type GoalRow = { id_meta_oltp: number; tiempo_key: number; metas_cumplidas: number; metas_pendientes: number };
 type NetworkRow = { tiempo_key: number; estudiante_key: number; red_key: number; contactos_activos: number; interacciones_sociales: number };
-type HabitRow = { tiempo_key: number; completado_count: number };
+type HabitRow = { tiempo_key: number; estudiante_key: number; completado_count: number };
 type NetworkDimension = { red_key: number; red_apoyo_activa: boolean | null };
 
 export type DashboardSummary = {
@@ -21,6 +21,9 @@ export type DashboardSummary = {
   supportStudentsCount: number;
   habitsCompletionPct: number | null;
   habitRecordsCount: number;
+  habitResilienceCorrelation: number | null;
+  habitIntrusiveCorrelation: number | null;
+  habitAssociationPairs: number;
   trend: Array<{ month: string; resilience: number | null; intrusive: number | null }>;
 };
 
@@ -49,7 +52,8 @@ const dateKey = (date: Date) => Number(date.toISOString().slice(0, 10).replaceAl
 export const emptyDashboard: DashboardSummary = {
   resilience: null, intrusivePer30Days: null, goalCompletionPct: null, activeSupportPct: null,
   activeContactsAvg: null, interactionsAvg: null, evaluationsCount: 0, goalsCount: 0,
-  supportEvaluationsCount: 0, supportStudentsCount: 0, habitsCompletionPct: null, habitRecordsCount: 0, trend: [],
+  supportEvaluationsCount: 0, supportStudentsCount: 0, habitsCompletionPct: null, habitRecordsCount: 0,
+  habitResilienceCorrelation: null, habitIntrusiveCorrelation: null, habitAssociationPairs: 0, trend: [],
 };
 
 export async function getDashboardSummary(supabase: SupabaseClient): Promise<DashboardSummary> {
@@ -62,7 +66,7 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
 
   const [clinical, goals, network, habits] = await Promise.all([
     fetchAllRows<ClinicalRow>(() => supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica")
-      .select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias")
+      .select("tiempo_key, estudiante_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias")
       .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("eval_key") as unknown as RangeableQuery<ClinicalRow>),
     fetchAllRows<GoalRow>(() => supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta")
       .select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes")
@@ -71,7 +75,7 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
       .select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales")
       .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("red_apoyo_fact_key") as unknown as RangeableQuery<NetworkRow>),
     fetchAllRows<HabitRow>(() => supabase.schema("datamart_resiliencia").from("fact_registro_habitos")
-      .select("tiempo_key, completado_count")
+      .select("tiempo_key, estudiante_key, completado_count")
       .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("registro_key") as unknown as RangeableQuery<HabitRow>),
   ]);
   const redKeys = [...new Set(network.map((row) => row.red_key))];
@@ -95,6 +99,43 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   // no aumentan el peso de una persona en el denominador.
   const latestNetworks = latestByKey(network, (row) => row.estudiante_key, (row) => row.tiempo_key);
   const activeNetworks = latestNetworks.filter((row) => activeMap.get(row.red_key) === true);
+
+  // Empareja los hechos por estudiante y mes para una asociación exploratoria.
+  // Cada punto es una observación estudiante-mes, no una muestra independiente de personas.
+  const clinicalByStudentMonth = new Map<string, { resilience: number[]; intrusive: number[] }>();
+  clinical.forEach((row) => {
+    const monthKey = Math.floor(row.tiempo_key / 100);
+    const key = row.estudiante_key + ":" + monthKey;
+    const values = clinicalByStudentMonth.get(key) ?? { resilience: [], intrusive: [] };
+    values.resilience.push(Number(row.indice_resiliencia));
+    values.intrusive.push(normalizeTo30Days(Number(row.pensamientos_intrusivos), Number(row.periodo_referencia_dias)) ?? 0);
+    clinicalByStudentMonth.set(key, values);
+  });
+
+  const habitsByStudentMonth = new Map<string, { completed: number; total: number }>();
+  habits.forEach((row) => {
+    const monthKey = Math.floor(row.tiempo_key / 100);
+    const key = row.estudiante_key + ":" + monthKey;
+    const counts = habitsByStudentMonth.get(key) ?? { completed: 0, total: 0 };
+    counts.completed += Number(row.completado_count) === 1 ? 1 : 0;
+    counts.total += 1;
+    habitsByStudentMonth.set(key, counts);
+  });
+
+  const habitRates: number[] = [];
+  const matchedResilience: number[] = [];
+  const matchedIntrusive: number[] = [];
+  clinicalByStudentMonth.forEach((clinicalValues, key) => {
+    const habitValues = habitsByStudentMonth.get(key);
+    if (!habitValues || habitValues.total === 0) return;
+    const habitRate = percentage(habitValues.completed, habitValues.total);
+    const resilienceValue = average(clinicalValues.resilience);
+    const intrusiveValue = average(clinicalValues.intrusive);
+    if (habitRate === null || resilienceValue === null || intrusiveValue === null) return;
+    habitRates.push(habitRate);
+    matchedResilience.push(resilienceValue);
+    matchedIntrusive.push(intrusiveValue);
+  });
 
   const byMonth = new Map<number, { resilience: number[]; intrusive: number[] }>();
   clinical.forEach((row) => {
@@ -126,6 +167,9 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     supportStudentsCount: latestNetworks.length,
     habitsCompletionPct: percentage(habits.filter((row) => Number(row.completado_count) === 1).length, habits.length),
     habitRecordsCount: habits.length,
+    habitResilienceCorrelation: pearsonCorrelation(habitRates, matchedResilience),
+    habitIntrusiveCorrelation: pearsonCorrelation(habitRates, matchedIntrusive),
+    habitAssociationPairs: habitRates.length,
     trend,
   };
 }
