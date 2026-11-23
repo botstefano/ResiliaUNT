@@ -18,10 +18,16 @@ export default async function PortalHomePage() {
   const isStudent = profile?.rol === "estudiante";
   return (
     <>
-      <div className="mb-7">
-        <p className="text-sm font-medium text-brand-700">{isStudent ? "Mi espacio" : "Panel de seguimiento"}</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">{isStudent ? "Mi progreso" : "Resumen general"}</h1>
-        <p className="mt-2 text-sm text-muted">Indicadores descriptivos del período móvil de 12 meses. Los datos visibles dependen de tu perfil y asignaciones.</p>
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-brand-700">{isStudent ? "Mi espacio" : "Panel de seguimiento"}</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">{isStudent ? "Mi progreso" : "Resumen general"}</h1>
+          <p className="mt-2 text-sm text-muted">Indicadores descriptivos del período móvil de 12 meses. Los datos visibles dependen de tu perfil y asignaciones.</p>
+        </div>
+        <a href="/api/reports/export" download
+          className="inline-flex items-center rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-soft hover:bg-canvas">
+          Descargar resumen CSV
+        </a>
       </div>
 
       {loadError && <div role="alert" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
