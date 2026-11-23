@@ -52,7 +52,7 @@ async function fetchAllRows<T>(createQuery: () => RangeableQuery<T>): Promise<T[
 const dateKey = (date: Date) => Number(date.toISOString().slice(0, 10).replaceAll("-", ""));
 export const emptyDashboard: DashboardSummary = {
   resilience: null, intrusivePer30Days: null, goalCompletionPct: null, activeSupportPct: null,
-  activeContactsAvg: null, interactionsAvg: null, evaluationsCount: 0, goalsCount: 0,
+  activeContactsAvg: null, interactionsAvg: null, evaluationsCount: 0, evaluatedStudentsCount: 0, goalsCount: 0,
   supportEvaluationsCount: 0, supportStudentsCount: 0, habitsCompletionPct: null, habitRecordsCount: 0,
   habitResilienceCorrelation: null, habitIntrusiveCorrelation: null, habitAssociationStudents: 0, trend: [],
 };
