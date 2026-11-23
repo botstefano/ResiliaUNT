@@ -50,7 +50,13 @@ export default async function PortalHomePage() {
             <div><p className="text-sm text-muted">Contactos activos promedio</p><p className="mt-1 text-2xl font-semibold">{format(summary.activeContactsAvg)}</p></div>
             <div className="h-px bg-line" />
             <div><p className="text-sm text-muted">Interacciones sociales promedio</p><p className="mt-1 text-2xl font-semibold">{format(summary.interactionsAvg)}</p></div>
-            <div className="rounded-xl bg-canvas p-4 text-xs leading-5 text-muted">Los hábitos se analizan como variables de seguimiento. Una asociación estadística no demuestra que un hábito cause un cambio en los otros indicadores.</div>
+            <div className="h-px bg-line" />
+            <div>
+              <p className="text-sm text-muted">Registros de hábitos completados</p>
+              <p className="mt-1 text-2xl font-semibold">{format(summary.habitsCompletionPct, "%")}</p>
+              <p className="mt-1 text-xs text-muted">{summary.habitRecordsCount} registros de hábitos en el período</p>
+            </div>
+            <div className="rounded-xl bg-canvas p-4 text-xs leading-5 text-muted">Hábitos, contactos e interacciones son variables complementarias, no KPI oficiales. Una asociación estadística no demuestra que un hábito cause un cambio en los otros indicadores.</div>
           </div>
         </section>
       </div>
