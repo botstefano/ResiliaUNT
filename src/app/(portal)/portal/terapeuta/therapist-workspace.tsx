@@ -5,13 +5,16 @@ import { todayInPeru } from "@/lib/dates";
 import Link from "next/link";
 
 type Student = { id_estudiante: number; codigo_universitario: string; nombre_visible: string; ciclo_academico: number | null; turno: string | null };
+type Room = { id_sala: number; codigo_sala: string; nombre_sala: string; pabellon: string | null; modalidad: string };
 type Session = { id_sesion: number; id_estudiante: number; inicio: string; estado: string; modalidad: string };
 type Tab = "clinical" | "support" | "session";
 
 export default function TherapistWorkspace() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [studentId, setStudentId] = useState("");
+  const [roomId, setRoomId] = useState("");
   const [tab, setTab] = useState<Tab>("clinical");
   const [date, setDate] = useState(todayInPeru());
   const [resilience, setResilience] = useState("50");
@@ -37,6 +40,7 @@ export default function TherapistWorkspace() {
     const sessionData = await sessionResponse.json();
     if (!studentResponse.ok) throw new Error(studentData.error || "No se pudo cargar la cartera.");
     setStudents(studentData.students ?? []);
+    setRooms(studentData.rooms ?? []);
     if (!studentId && studentData.students?.length) setStudentId(String(studentData.students[0].id_estudiante));
     setSessions(sessionResponse.ok ? (sessionData.sessions ?? []) : []);
     setLoading(false);
@@ -52,16 +56,16 @@ export default function TherapistWorkspace() {
     setSaving(true); setMessage("");
     try {
       let endpoint = "";
-      let body: Record<string, string | number | boolean> = {};
+      let body: Record<string, string | number | boolean | null> = {};
       if (tab === "clinical") {
         endpoint = "/api/therapist/evaluations";
-        body = { id_estudiante: Number(studentId), fecha: date, indice_resiliencia: Number(resilience), pensamientos_intrusivos: Number(intrusive), periodo_referencia_dias: Number(period), cantidad_sesiones: Number(sessionCount) };
+        body = { id_estudiante: Number(studentId), fecha: date, id_sala: roomId ? Number(roomId) : null, indice_resiliencia: Number(resilience), pensamientos_intrusivos: Number(intrusive), periodo_referencia_dias: Number(period), cantidad_sesiones: Number(sessionCount) };
       } else if (tab === "support") {
         endpoint = "/api/therapist/support-network";
         body = { id_estudiante: Number(studentId), fecha: date, periodo_referencia_dias: Number(period), red_apoyo_activa: supportActive === "true", contactos_activos: Number(contacts), interacciones_sociales: Number(interactions) };
       } else {
         endpoint = "/api/sessions";
-        body = { id_estudiante: Number(studentId), inicio: new Date(sessionAt + ":00-05:00").toISOString(), modalidad: modality };
+        body = { id_estudiante: Number(studentId), inicio: new Date(sessionAt + ":00-05:00").toISOString(), modalidad: modality, id_sala: roomId ? Number(roomId) : null };
       }
 
       const response = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -130,6 +134,14 @@ export default function TherapistWorkspace() {
               {students.map((student) => <option key={student.id_estudiante} value={student.id_estudiante}>{student.nombre_visible} · {student.codigo_universitario}</option>)}
             </select>
           </div>
+
+          {(tab === "clinical" || tab === "session") && <div className="md:col-span-2">
+            <label htmlFor="therapyRoom" className="mb-2 block text-sm font-medium">Sala de terapia (opcional)</label>
+            <select id="therapyRoom" value={roomId} onChange={(event) => setRoomId(event.target.value)} className="w-full rounded-xl border border-line px-3 py-3">
+              <option value="">Sin sala asignada</option>
+              {rooms.map((room) => <option key={room.id_sala} value={room.id_sala}>{room.nombre_sala} · {room.pabellon || "UNT"} · {room.modalidad}</option>)}
+            </select>
+          </div>}
 
           {tab !== "session" && <div>
             <label htmlFor="date" className="mb-2 block text-sm font-medium">Fecha de evaluación</label>
