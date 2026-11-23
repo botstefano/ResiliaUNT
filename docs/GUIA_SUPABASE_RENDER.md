@@ -13,9 +13,11 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
    - `database/supabase/008_meta_transaccional.sql`
    - `database/supabase/009_admin_asignaciones.sql`
    - `database/supabase/004_etl.sql`
+   - `database/supabase/010_hardening_rls.sql` — aísla helpers SECURITY DEFINER en `resilia_private` y endurece las políticas.
+   - `database/supabase/011_foreign_key_indexes.sql` — agrega índices de soporte a claves foráneas.
    - `database/supabase/005_seed_demo.sql` solo si se trata de un entorno de demostración.
 3. Ejecuta `database/supabase/006_validaciones_kpi.sql` después del ETL para revisar conteos, fechas, relaciones y KPI.
-4. En **Project Settings → API → Exposed schemas**, agrega `oltp_resiliencia` y `datamart_resiliencia` junto con `public`. No agregues otros esquemas sin revisar sus permisos.
+4. En **Project Settings → API → Exposed schemas**, agrega `oltp_resiliencia` y `datamart_resiliencia` junto con `public`. **No expongas `resilia_private`** ni otros esquemas internos.
 5. En **Authentication → URL Configuration**, configura el dominio público de Render como Site URL y permite los redirect URLs de desarrollo y producción que permitan el callback y su parámetro `next` (por ejemplo `http://localhost:3000/auth/callback**` y `https://TU-SERVICIO.onrender.com/auth/callback**`). En producción usa exclusivamente HTTPS.
 6. Configura la plantilla de correo de recuperación de Supabase Auth y comprueba que su enlace redirija al callback de la aplicación.
 7. Mantén el registro público cerrado. Después del primer administrador, invita a los usuarios desde `/portal/admin`; el trigger asigna inicialmente el rol `pendiente`.
@@ -88,6 +90,10 @@ Configura `.env.local` con:
 - Revisa la seguridad/RLS y realiza pruebas con cuentas distintas y datos sintéticos antes de cargar registros reales.
 - Los indicadores son descriptivos; no diagnostican ni recomiendan tratamientos. Los módulos de IA quedan fuera de esta primera fase.
 
-## Validación que sigue pendiente
+## Estado de validación del entorno
 
-El workflow de GitHub Actions ejecuta instalación, TypeScript, pruebas unitarias, ESLint y build de producción en cada actualización de `main`. Comprueba la pestaña **Actions** para consultar el resultado del commit actual. Esto valida el código, no la conectividad con el proyecto real: los scripts SQL aún deben ejecutarse en Supabase, revisar sus permisos allí y probar el flujo con cuentas de cada rol. Render todavía no está desplegado.
+**Supabase (23 de noviembre de 2026):** el proyecto `ResiliaUNT` está creado y conectado. Se aplicaron las migraciones `001`, `002`, `003`, `007`, `008`, `009`, `004`, `010` y `011`. Se cargó el seed sintético: 40 estudiantes demo, 400 evaluaciones clínicas, 800 registros de hábitos, 80 metas con 800 estados y 400 valoraciones de red. Los cuatro hechos del DataMart coinciden con sus orígenes y la validación de relaciones devolvió cero claves huérfanas. Todas las tablas de la aplicación tienen RLS habilitado; los asesores de seguridad y salud no reportan avisos.
+
+**Pendiente de configuración manual:** agregar `oltp_resiliencia` y `datamart_resiliencia` en **Project Settings → API → Exposed schemas**, sin exponer `resilia_private`; configurar URL de Auth/callbacks; crear la cuenta inicial de administrador; y cargar las variables de entorno en Render. No se ha desplegado Render ni ejecutado una prueba E2E del login con usuarios reales de Auth.
+
+El workflow de GitHub Actions valida instalación, TypeScript, pruebas unitarias, ESLint y build de producción. Esa CI valida el código, no sustituye la prueba E2E de autenticación y permisos sobre el proyecto conectado.
