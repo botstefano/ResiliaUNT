@@ -113,7 +113,7 @@ export default function TherapistWorkspace() {
               <p className="mt-2 text-xs text-muted">Ciclo {student.ciclo_academico ?? "—"} · {student.turno ?? "—"}</p>
             </button>
             <Link href={"/portal/terapeuta/estudiantes/" + student.id_estudiante} className="mt-3 inline-block text-xs font-semibold text-brand-700 hover:underline">Abrir Perfil 360 →</Link>
-          </article>)
+          </article>)}
         </div> : <p className="mt-4 rounded-xl bg-canvas p-4 text-sm text-muted">Todavía no tienes estudiantes asignados. El administrador debe registrar las relaciones profesionales.</p>}
       </section>
 
