@@ -16,7 +16,7 @@ export default function PortalShell({ children, role, displayName }: Props) {
     { href: "/portal/habitos", label: "Mis hábitos", icon: Activity, show: role === "estudiante" },
     { href: "/portal/metas", label: "Mis metas", icon: Target, show: role === "estudiante" },
     { href: "/portal/sesiones", label: "Mis sesiones", icon: CalendarDays, show: role === "estudiante" || role === "terapeuta" },
-    { href: "/portal/terapeuta", label: "Seguimiento", icon: HeartHandshake, show: role === "terapeuta" || role === "administrador" },
+    { href: "/portal/terapeuta", label: "Seguimiento", icon: HeartHandshake, show: role === "terapeuta" },
   ].filter((item) => item.show);
 
   async function signOut() {
