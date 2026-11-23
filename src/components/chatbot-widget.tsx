@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Bot, CalendarClock, Check, CircleAlert, MessageCircle, Send, ShieldCheck, X } from "lucide-react";
+import { Activity, BarChart3, BookOpen, Bot, CalendarClock, Check, CircleAlert, Compass, Leaf, MessageCircle, Send, ShieldCheck, Target, X } from "lucide-react";
 
 type Role = "estudiante" | "terapeuta";
 type ChatMessage = { role: "user" | "assistant"; content: string; kind?: string; offerContact?: boolean; showSafetyLinks?: boolean };
@@ -20,9 +20,10 @@ export default function ChatbotWidget({ role }: { role: Role }) {
   const [notice, setNotice] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([{
     role: "assistant",
+    kind: role === "estudiante" ? "welcome" : undefined,
     content: role === "terapeuta"
       ? "Hola. Soy Nexo, tu asistente analítico de ResiliaUNT. Puedo resumir datos descriptivos de tu cartera sintética asignada."
-      : "Hola. Soy Brújula, tu asistente de ResiliaUNT. Puedo ayudarte a utilizar la plataforma y consultar tus propios registros.",
+      : "Hola. Soy Brújula, tu asistente de ResiliaUNT. Puedo ayudarte a navegar la plataforma y consultar la información disponible de tu perfil.",
   }]);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [loadingAlerts, setLoadingAlerts] = useState(false);
@@ -166,23 +167,97 @@ export default function ChatbotWidget({ role }: { role: Role }) {
 
             {messages.map((message, index) => (
               <div key={index} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
-                <div className={"max-w-[88%] whitespace-pre-wrap rounded-2xl px-3 py-2.5 text-sm leading-6 " +
-                  (message.role === "user" ? "rounded-br-md bg-brand-700 text-white" : "rounded-bl-md border border-line bg-white text-ink")}>
-                  {message.content}
-                  {message.showSafetyLinks && (
-                    <div className="mt-3 space-y-2 border-t border-line pt-3 text-xs">
-                      <a href="tel:113" className="block rounded-lg border border-line px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50">Llamar a Línea 113 · opción 5</a>
-                      <a href="tel:106" className="block rounded-lg border border-line px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50">SAMU 106 · emergencia médica</a>
-                      <p className="text-muted">Acércate también a una persona adulta de confianza y pide apoyo presencial. No esperes una respuesta del chat.</p>
+                {message.kind === "welcome" && role === "estudiante" ? (
+                  <article className="w-full max-w-[96%] overflow-hidden rounded-2xl border border-line bg-white shadow-soft">
+                    <div className="border-b border-brand-100 bg-brand-50 px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-700">
+                          <Compass size={21} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold tracking-tight text-ink">Hola, soy Brújula</p>
+                          <p className="mt-0.5 text-[11px] font-medium text-brand-700">Tu asistente de ResiliaUNT</p>
+                        </div>
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-muted">
+                        Puedo ayudarte a encontrar las herramientas de la plataforma y consultar la información disponible en tu perfil.
+                      </p>
                     </div>
-                  )}
-                  {message.offerContact && (
-                    <button type="button" onClick={requestContact} disabled={sendingContact}
-                      className="mt-3 block w-full rounded-lg bg-brand-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">
-                      {sendingContact ? "Registrando…" : "Solicitar contacto con mi terapeuta"}
-                    </button>
-                  )}
-                </div>
+
+                    <div className="grid grid-cols-2 gap-2 p-3">
+                      <div className="min-w-0 rounded-xl border border-line bg-white p-2.5">
+                        <div className="flex items-center gap-1.5 text-brand-700">
+                          <BookOpen size={15} className="shrink-0" />
+                          <p className="text-[11px] font-semibold text-ink">Plataforma</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-4 text-muted">Encuentra evaluaciones, hábitos, metas y agenda.</p>
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-line bg-white p-2.5">
+                        <div className="flex items-center gap-1.5 text-brand-700">
+                          <BarChart3 size={15} className="shrink-0" />
+                          <p className="text-[11px] font-semibold text-ink">Indicadores</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-4 text-muted">Consulta resiliencia, indicadores personales y red de apoyo.</p>
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-line bg-white p-2.5">
+                        <div className="flex items-center gap-1.5 text-brand-700">
+                          <Leaf size={15} className="shrink-0" />
+                          <p className="text-[11px] font-semibold text-ink">Hábitos</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-4 text-muted">Revisa tus registros, frecuencia e intensidad.</p>
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-line bg-white p-2.5">
+                        <div className="flex items-center gap-1.5 text-brand-700">
+                          <Target size={15} className="shrink-0" />
+                          <p className="text-[11px] font-semibold text-ink">Metas</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-4 text-muted">Comprueba avances, pendientes y cumplimiento.</p>
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-line bg-white p-2.5">
+                        <div className="flex items-center gap-1.5 text-brand-700">
+                          <CalendarClock size={15} className="shrink-0" />
+                          <p className="text-[11px] font-semibold text-ink">Sesiones</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-4 text-muted">Consulta fecha, hora, modalidad y profesional.</p>
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-line bg-white p-2.5">
+                        <div className="flex items-center gap-1.5 text-brand-700">
+                          <MessageCircle size={15} className="shrink-0" />
+                          <p className="text-[11px] font-semibold text-ink">Tus consultas</p>
+                        </div>
+                        <p className="mt-1.5 text-[10px] leading-4 text-muted">Pregunta por los datos disponibles en tu perfil.</p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-line bg-canvas/70 px-3 py-3">
+                      <div className="flex items-start gap-2">
+                        <ShieldCheck size={15} className="mt-0.5 shrink-0 text-brand-600" />
+                        <p className="text-[10px] leading-4 text-muted">
+                          Brújula consulta únicamente los datos autorizados de tu perfil y no accede a la información de otros estudiantes. Si un dato no está registrado, te lo indicaré.
+                        </p>
+                      </div>
+                      <p className="mt-3 text-xs font-semibold text-ink">¿Qué te gustaría revisar primero?</p>
+                    </div>
+                  </article>
+                ) : (
+                  <div className={"max-w-[88%] whitespace-pre-wrap rounded-2xl px-3 py-2.5 text-sm leading-6 " +
+                    (message.role === "user" ? "rounded-br-md bg-brand-700 text-white" : "rounded-bl-md border border-line bg-white text-ink")}>
+                    {message.content}
+                    {message.showSafetyLinks && (
+                      <div className="mt-3 space-y-2 border-t border-line pt-3 text-xs">
+                        <a href="tel:113" className="block rounded-lg border border-line px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50">Llamar a Línea 113 · opción 5</a>
+                        <a href="tel:106" className="block rounded-lg border border-line px-3 py-2 font-semibold text-brand-700 hover:bg-brand-50">SAMU 106 · emergencia médica</a>
+                        <p className="text-muted">Acércate también a una persona adulta de confianza y pide apoyo presencial. No esperes una respuesta del chat.</p>
+                      </div>
+                    )}
+                    {message.offerContact && (
+                      <button type="button" onClick={requestContact} disabled={sendingContact}
+                        className="mt-3 block w-full rounded-lg bg-brand-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">
+                        {sendingContact ? "Registrando…" : "Solicitar contacto con mi terapeuta"}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
             {notice && <p role="status" className="rounded-lg border border-line bg-white px-3 py-2 text-xs text-muted">{notice}</p>}
