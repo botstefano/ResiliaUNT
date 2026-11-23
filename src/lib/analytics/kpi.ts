@@ -13,3 +13,23 @@ export function percentage(part: number, total: number): number | null {
   if (!Number.isFinite(part) || !Number.isFinite(total) || total <= 0) return null;
   return (part / total) * 100;
 }
+
+/**
+ * Devuelve una única observación por entidad, conservando la de mayor orden temporal.
+ * Los elementos sin fecha válida no sustituyen observaciones válidas anteriores.
+ */
+export function latestByKey<T>(
+  items: T[],
+  keyOf: (item: T) => string | number,
+  orderOf: (item: T) => number,
+): T[] {
+  const latest = new Map<string | number, T>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const order = orderOf(item);
+    if (!Number.isFinite(order)) continue;
+    const current = latest.get(key);
+    if (!current || order > orderOf(current)) latest.set(key, item);
+  }
+  return [...latest.values()];
+}
