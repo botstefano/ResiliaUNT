@@ -6,13 +6,26 @@ type Role = "pendiente" | "estudiante" | "terapeuta" | "administrador";
 type Account = { id: string; rol: Role; id_estudiante: number | null; id_terapeuta: number | null; nombre_visible: string | null; email: string | null; last_sign_in_at: string | null };
 type Student = { id_estudiante: number; codigo_universitario: string; nombre_visible: string };
 type Therapist = { id_terapeuta: number; codigo_terapeuta: string; nombre: string };
+type Room = { id_sala: number; codigo_sala: string; nombre_sala: string; pabellon: string | null; modalidad: string; capacidad: number };
 type Assignment = { id_asignacion: number; id_terapeuta: number; id_estudiante: number; fecha_inicio: string; fecha_fin: string | null; activo: boolean; student_name: string; student_code: string; therapist_name: string; therapist_code: string };
-type AdminData = { accounts: Account[]; students: Student[]; therapists: Therapist[]; assignments: Assignment[]; note: string | null };
+type AdminData = { accounts: Account[]; students: Student[]; therapists: Therapist[]; rooms: Room[]; assignments: Assignment[]; note: string | null };
 
 export default function AdminWorkspace() {
   const [data, setData] = useState<AdminData | null>(null);
   const [selectedId, setSelectedId] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [studentCode, setStudentCode] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [studentCycle, setStudentCycle] = useState("");
+  const [studentShift, setStudentShift] = useState("");
+  const [therapistCode, setTherapistCode] = useState("");
+  const [therapistName, setTherapistName] = useState("");
+  const [therapistSpecialty, setTherapistSpecialty] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [roomBuilding, setRoomBuilding] = useState("");
+  const [roomModality, setRoomModality] = useState("Presencial");
+  const [roomCapacity, setRoomCapacity] = useState("1");
   const [role, setRole] = useState<Role>("pendiente");
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -81,6 +94,34 @@ export default function AdminWorkspace() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo enviar la invitación.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveCatalog(
+    event: FormEvent<HTMLFormElement>,
+    payload: Record<string, string | number | null>,
+    successMessage: string,
+    clearForm: () => void,
+  ) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch("/api/admin/catalogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "No se pudo crear el registro institucional.");
+      setMessage(successMessage);
+      clearForm();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo crear el registro institucional.");
     } finally {
       setSaving(false);
     }
@@ -192,6 +233,110 @@ export default function AdminWorkspace() {
           <p className="text-sm text-muted">Asignaciones activas</p>
           <p className="mt-2 text-3xl font-semibold">{data.assignments.filter((assignment) => assignment.activo).length}</p>
         </article>
+      </section>
+
+      <section className="rounded-2xl border border-line bg-white p-6 shadow-soft">
+        <div className="mb-5">
+          <h2 className="font-semibold">Catálogos institucionales</h2>
+          <p className="mt-1 text-xs leading-5 text-muted">Registra primero estudiantes, terapeutas y salas que existan en el servicio. Los códigos deben ser institucionales y únicos. No introduzcas información clínica aquí.</p>
+        </div>
+        <div className="grid gap-5 xl:grid-cols-3">
+          <form onSubmit={(event) => saveCatalog(event, {
+            kind: "estudiante",
+            codigo_universitario: studentCode,
+            nombre_visible: studentName,
+            ciclo_academico: studentCycle ? Number(studentCycle) : null,
+            turno: studentShift || null,
+          }, "Estudiante registrado correctamente.", () => {
+            setStudentCode(""); setStudentName(""); setStudentCycle(""); setStudentShift("");
+          })} className="space-y-3 rounded-xl border border-line p-4">
+            <h3 className="text-sm font-semibold">Nuevo estudiante</h3>
+            <div>
+              <label htmlFor="newStudentCode" className="mb-1.5 block text-xs font-medium">Código universitario</label>
+              <input id="newStudentCode" required maxLength={20} value={studentCode} onChange={(event) => setStudentCode(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newStudentName" className="mb-1.5 block text-xs font-medium">Nombre visible</label>
+              <input id="newStudentName" required maxLength={150} value={studentName} onChange={(event) => setStudentName(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newStudentCycle" className="mb-1.5 block text-xs font-medium">Ciclo (opcional)</label>
+              <input id="newStudentCycle" type="number" min="1" max="14" value={studentCycle} onChange={(event) => setStudentCycle(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newStudentShift" className="mb-1.5 block text-xs font-medium">Turno (opcional)</label>
+              <select id="newStudentShift" value={studentShift} onChange={(event) => setStudentShift(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm">
+                <option value="">Sin especificar</option><option>Mañana</option><option>Tarde</option><option>Noche</option>
+              </select>
+            </div>
+            <button disabled={saving || !studentCode.trim() || !studentName.trim()} className="w-full rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Guardar estudiante</button>
+          </form>
+
+          <form onSubmit={(event) => saveCatalog(event, {
+            kind: "terapeuta",
+            codigo_terapeuta: therapistCode,
+            nombre: therapistName,
+            especialidad: therapistSpecialty || null,
+          }, "Profesional registrado correctamente.", () => {
+            setTherapistCode(""); setTherapistName(""); setTherapistSpecialty("");
+          })} className="space-y-3 rounded-xl border border-line p-4">
+            <h3 className="text-sm font-semibold">Nuevo terapeuta</h3>
+            <div>
+              <label htmlFor="newTherapistCode" className="mb-1.5 block text-xs font-medium">Código profesional</label>
+              <input id="newTherapistCode" required maxLength={30} value={therapistCode} onChange={(event) => setTherapistCode(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newTherapistName" className="mb-1.5 block text-xs font-medium">Nombre visible</label>
+              <input id="newTherapistName" required maxLength={150} value={therapistName} onChange={(event) => setTherapistName(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newTherapistSpecialty" className="mb-1.5 block text-xs font-medium">Especialidad (opcional)</label>
+              <input id="newTherapistSpecialty" maxLength={100} value={therapistSpecialty} onChange={(event) => setTherapistSpecialty(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <button disabled={saving || !therapistCode.trim() || !therapistName.trim()} className="w-full rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Guardar terapeuta</button>
+          </form>
+
+          <form onSubmit={(event) => saveCatalog(event, {
+            kind: "sala",
+            codigo_sala: roomCode,
+            nombre_sala: roomName,
+            pabellon: roomBuilding || null,
+            modalidad: roomModality,
+            capacidad: Number(roomCapacity),
+          }, "Sala registrada correctamente.", () => {
+            setRoomCode(""); setRoomName(""); setRoomBuilding(""); setRoomModality("Presencial"); setRoomCapacity("1");
+          })} className="space-y-3 rounded-xl border border-line p-4">
+            <h3 className="text-sm font-semibold">Nueva sala de terapia</h3>
+            <div>
+              <label htmlFor="newRoomCode" className="mb-1.5 block text-xs font-medium">Código de sala</label>
+              <input id="newRoomCode" required maxLength={30} value={roomCode} onChange={(event) => setRoomCode(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newRoomName" className="mb-1.5 block text-xs font-medium">Nombre de sala</label>
+              <input id="newRoomName" required maxLength={100} value={roomName} onChange={(event) => setRoomName(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newRoomBuilding" className="mb-1.5 block text-xs font-medium">Pabellón / ubicación</label>
+              <input id="newRoomBuilding" maxLength={100} value={roomBuilding} onChange={(event) => setRoomBuilding(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label htmlFor="newRoomModality" className="mb-1.5 block text-xs font-medium">Modalidad</label>
+              <select id="newRoomModality" value={roomModality} onChange={(event) => setRoomModality(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm">
+                <option>Presencial</option><option>Virtual</option><option>Mixta</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="newRoomCapacity" className="mb-1.5 block text-xs font-medium">Capacidad</label>
+              <input id="newRoomCapacity" type="number" min="1" max="100" required value={roomCapacity} onChange={(event) => setRoomCapacity(event.target.value)} className="w-full rounded-lg border border-line px-3 py-2.5 text-sm" />
+            </div>
+            <button disabled={saving || !roomCode.trim() || !roomName.trim()} className="w-full rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Guardar sala</button>
+          </form>
+        </div>
+        <div className="mt-4 grid gap-2 text-xs text-muted sm:grid-cols-3">
+          <p>{data.students.length} estudiantes activos</p>
+          <p>{data.therapists.length} terapeutas activos</p>
+          <p>{data.rooms.length} salas activas</p>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-line bg-white p-6 shadow-soft">
