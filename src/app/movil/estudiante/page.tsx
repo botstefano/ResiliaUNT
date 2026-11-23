@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Activity, BarChart3, CalendarDays, Target } from "lucide-react";
 import ChatbotWidget from "@/components/chatbot-widget";
+import MobileSignOutButton from "../mobile-sign-out";
 import { getAuthContext } from "@/lib/auth/context";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +17,8 @@ const shortcuts = [
 export default async function StudentMobilePage() {
   const { user, profile } = await getAuthContext();
 
-  if (!user) redirect("/login?next=/movil/estudiante");
-  if (profile?.rol !== "estudiante" || !profile.id_estudiante) {
-    redirect("/login?next=/movil/estudiante");
-  }
+  if (!user) redirect("/movil");
+  if (profile?.rol !== "estudiante" || !profile.id_estudiante) redirect("/movil");
 
   const displayName = profile.nombre_visible?.trim() || "Estudiante";
   const firstName = displayName.split(/\s+/)[0];
@@ -33,12 +32,14 @@ export default async function StudentMobilePage() {
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-ink">Hola, {firstName}</h1>
             <p className="mt-1 text-sm text-muted">Tu espacio personal de seguimiento.</p>
           </div>
-          <form action="/api/auth/logout" method="post">
-            <button className="rounded-xl border border-line bg-white px-3 py-2 text-xs font-semibold text-muted shadow-soft">
-              Cerrar sesión
-            </button>
-          </form>
+          <MobileSignOutButton />
         </header>
+
+        {profile.isDemo && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+            <strong>Perfil sintético de demostración.</strong> La información mostrada es ficticia y se consulta desde Supabase.
+          </div>
+        )}
 
         <section className="rounded-3xl bg-brand-700 p-5 text-white shadow-soft">
           <p className="text-xs font-semibold uppercase tracking-[.15em] text-teal-100">Portal del estudiante</p>

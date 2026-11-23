@@ -64,6 +64,15 @@ export async function POST(request: Request) {
       path: "/",
       maxAge: DEMO_SESSION_SECONDS,
     });
+    // Las sesiones del selector web no deben conservar el marcador exclusivo de la app móvil.
+    response.cookies.set("resilia_mobile_student", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+    });
     return response;
   } catch (error) {
     console.error("No se pudo crear la sesión demo:", error);
@@ -74,6 +83,14 @@ export async function POST(request: Request) {
 export async function DELETE() {
   const response = NextResponse.json({ ok: true });
   response.cookies.set(DEMO_SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+    expires: new Date(0),
+  });
+  response.cookies.set("resilia_mobile_student", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

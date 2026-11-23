@@ -5,7 +5,7 @@ import { getAuthContext } from "@/lib/auth/context";
 export const dynamic = "force-dynamic";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const { user, profile } = await getAuthContext();
+  const { user, profile, isMobileStudent } = await getAuthContext();
   if (!user) redirect("/login");
 
   if (!profile || profile.rol === "pendiente") {
@@ -24,5 +24,5 @@ export default async function PortalLayout({ children }: { children: React.React
   }
 
   const displayName = profile.nombre_visible || user.email || "Usuario ResiliaUNT";
-  return <PortalShell role={profile.rol} displayName={displayName} isDemo={profile.isDemo === true}>{children}</PortalShell>;
+  return <PortalShell role={profile.rol} displayName={displayName} isDemo={profile.isDemo === true} isMobileStudent={isMobileStudent}>{children}</PortalShell>;
 }

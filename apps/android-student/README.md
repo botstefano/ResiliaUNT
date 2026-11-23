@@ -1,68 +1,91 @@
 # ResiliaUNT Estudiante — Android
 
-Aplicación Android inicial para acceder exclusivamente al portal personal del estudiante de ResiliaUNT.
+Aplicación Android complementaria para el portal personal de estudiantes de ResiliaUNT.
 
-## Enfoque de esta primera versión
+## Qué hace esta versión
 
-- Proyecto Android nativo ligero con WebView.
-- Reutiliza el portal web y el backend existentes; no duplica la lógica de negocio.
-- El inicio de sesión sigue siendo el de ResiliaUNT.
-- La sesión se conserva mediante las cookies del WebView.
-- El destino de la app es /movil/estudiante, una ruta que verifica en el servidor que la cuenta tenga el rol estudiante.
-- No incluye claves de Supabase, claves de Groq ni conexión directa a PostgreSQL/SQL Server.
-- Requiere conexión a internet; no es una aplicación offline.
+- Abre la entrada móvil exclusiva para estudiantes: \`/movil\`.
+- Muestra la interfaz de demostración con una lista de perfiles sintéticos de estudiantes.
+- No ofrece selector ni acceso de terapeuta.
+- Permite buscar por nombre o código sintético.
+- Al seleccionar un estudiante, el servidor valida que el registro exista, esté activo y tenga código \`DEMO-*\`; luego crea una sesión sintética firmada.
+- Usa el OLTP actual de Supabase a través de las rutas API del backend de ResiliaUNT.
+- Incluye accesos al portal personal, hábitos, metas, sesiones y Brújula.
+- No guarda credenciales ni claves de Supabase dentro del APK.
 
-Esta elección reduce mantenimiento mientras el portal sigue en Next.js y conserva su autenticación basada en sesión web. Más adelante se puede reemplazar la capa WebView por una interfaz móvil nativa sin cambiar el backend ni el modelo de datos.
+La aplicación utiliza una WebView Android ligera para reutilizar la autenticación, las rutas API y los controles de autorización ya implementados en ResiliaUNT. Requiere conexión a internet.
+
+## Importante sobre Supabase
+
+El APK no se conecta directamente a PostgreSQL ni contiene la clave \`service_role\`. La comunicación sigue este recorrido:
+
+\`APK → WebView HTTPS → Backend ResiliaUNT en Render → Supabase\`
+
+El backend consulta Supabase usando sus variables privadas y comprueba el perfil antes de entregar información. La cookie de demostración es HTTP-only, firmada en el servidor y temporal (4 horas).
+
+Los perfiles que aparecen en el selector son los estudiantes sintéticos ya existentes en \`oltp_resiliencia.estudiante\`. No crea usuarios de Supabase Auth y no modifica el OLTP ni el DataMart.
 
 ## Requisitos
 
 - Android Studio 2024.2.1 o posterior.
 - Android SDK Platform 35.
-- JDK 17. Android Studio puede administrar el JDK del proyecto.
+- JDK 17. Android Studio puede usar su JDK integrado.
 - Gradle 8.9 se descarga automáticamente mediante el wrapper incluido.
 
-No necesitas instalar Node.js para compilar este proyecto Android.
+No necesitas instalar Node.js para compilar el proyecto Android.
 
-## Abrir y compilar en Windows
+## Descargar la rama y abrir el proyecto
 
-1. Descarga la rama feat/student-android-app del repositorio ResiliaUNT.
-2. Descomprime el proyecto.
-3. En Android Studio selecciona Open y abre la carpeta apps/android-student (no la raíz del repositorio).
-4. Acepta la sincronización de Gradle y, si se solicita, instala Android SDK Platform 35.
-5. Para crear el APK, selecciona Build > Build Bundle(s) / APK(s) > Build APK(s).
+1. Descarga el ZIP de la rama \`feat/student-android-app\` del repositorio ResiliaUNT.
+2. Descomprime el ZIP.
+3. En Android Studio selecciona **Open**.
+4. Abre directamente la carpeta \`apps/android-student\`.
+5. Espera a que termine la sincronización de Gradle. Si se solicita, instala Android SDK Platform 35.
 
-El APK de depuración se generará en:
+No abras la raíz del repositorio: el proyecto Android está dentro de esa carpeta.
 
-app/build/outputs/apk/debug/app-debug.apk
+## Generar el APK
 
-También puedes compilar desde PowerShell, dentro de esta carpeta:
+Desde Android Studio:
 
+**Build → Build Bundle(s) / APK(s) → Build APK(s)**
+
+O desde PowerShell, dentro de \`apps/android-student\`:
+
+\`\`\`powershell
 .\gradlew.bat assembleDebug
+\`\`\`
 
-## Cambiar la dirección del portal
+El APK de depuración se genera en:
 
-De forma predeterminada la app apunta al servicio Render actual:
+\`app/build/outputs/apk/debug/app-debug.apk\`
 
-https://resiliaunt.onrender.com
+## Dirección del backend
 
-Para apuntar a otro dominio HTTPS, compila con una propiedad Gradle:
+La app apunta por defecto a:
 
+\`https://resiliaunt.onrender.com\`
+
+Puedes cambiar el dominio HTTPS al compilar:
+
+\`\`\`powershell
 .\gradlew.bat assembleDebug -PresiliauntPortalUrl=https://tu-dominio.example
+\`\`\`
 
-No uses HTTP ni coloques secretos en esta propiedad. Solo se configura la dirección pública del portal.
+No uses HTTP ni agregues claves o secretos a esta propiedad.
 
-## Importante antes de probar el inicio de sesión
+## Despliegue web necesario para que Supabase responda
 
-La rama añade la ruta web protegida /movil/estudiante y modifica el login para regresar a esa ruta al autenticarse desde la app. Por tanto, el APK se puede compilar desde esta rama, pero el portal remoto debe tener desplegada esta misma versión de ResiliaUNT para que el acceso móvil funcione.
+La rama contiene tanto el proyecto Android como las rutas web nuevas para el selector móvil. El servicio de Render actual sigue desplegando \`main\`; por tanto, el APK compilará localmente, pero el flujo móvil con perfiles sintéticos y Supabase no estará disponible hasta que el backend desplegado incluya estos cambios.
 
-El servicio Render conectado actualmente a main no incorpora esta ruta hasta que la rama se integre en main o se despliegue temporalmente desde esta rama. La app no altera Supabase ni el DataMart.
+No se ha fusionado esta rama ni se ha cambiado el despliegue de Render. Antes de probar el APK conectado, integra/despliega esta rama en un entorno web de pruebas o en el servicio correspondiente.
 
-## Prueba recomendada
+## Pruebas sugeridas
 
-- Probar primero en un emulador Android.
-- Iniciar sesión con una cuenta que tenga perfil de estudiante.
-- Confirmar que una cuenta de terapeuta no accede al portal móvil.
-- Verificar el cierre de sesión y que la app vuelva al login.
-- Comprobar que los enlaces externos se abren fuera de la app y que las páginas internas permanecen en el WebView.
-
-La autorización se aplica en el servidor de ResiliaUNT. El WebView es solo la interfaz Android y no constituye una barrera de seguridad por sí mismo.
+- Abrir la app y comprobar que aparece la lista solo de estudiantes.
+- Buscar por nombre y código.
+- Ingresar con un perfil y verificar su portal personal.
+- Comprobar que cambiar de perfil vuelve al selector móvil, no al selector web de terapeutas.
+- Cerrar sesión y confirmar que se eliminan la cookie demo y el marcador móvil.
+- Verificar que no se puede abrir el portal de terapeuta con una sesión de estudiante.
+- Confirmar que la información proviene del backend y que el APK no contiene secretos.

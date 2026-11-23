@@ -186,7 +186,7 @@ public final class MainActivity extends Activity {
         errorPanel.setVisibility(View.GONE);
         webView.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.VISIBLE);
-        String startUrl = BuildConfig.PORTAL_BASE_URL + "/login?next=%2Fmovil%2Festudiante";
+        String startUrl = BuildConfig.PORTAL_BASE_URL + "/movil";
         webView.loadUrl(startUrl);
     }
 

@@ -7,9 +7,15 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/auth/context";
 import ChatbotWidget from "@/components/chatbot-widget";
 
-type Props = { children: React.ReactNode; role: AppRole; displayName: string; isDemo?: boolean };
+type Props = {
+  children: React.ReactNode;
+  role: AppRole;
+  displayName: string;
+  isDemo?: boolean;
+  isMobileStudent?: boolean;
+};
 
-export default function PortalShell({ children, role, displayName, isDemo = false }: Props) {
+export default function PortalShell({ children, role, displayName, isDemo = false, isMobileStudent = false }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const links = [
@@ -27,7 +33,7 @@ export default function PortalShell({ children, role, displayName, isDemo = fals
     } else {
       await createSupabaseBrowserClient().auth.signOut();
     }
-    router.replace("/login");
+    router.replace(isMobileStudent ? "/movil" : "/login");
     router.refresh();
   }
 
@@ -62,7 +68,9 @@ export default function PortalShell({ children, role, displayName, isDemo = fals
         <div className="mx-auto max-w-7xl">
           {isDemo && <div className="mb-5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
             <span><strong>Modo de demostración.</strong> Todos los registros son sintéticos; los cambios solo modifican el entorno demo.</span>
-            <Link href="/demo" className="font-semibold underline">Cambiar perfil</Link>
+            <Link href={isMobileStudent ? "/movil" : "/demo"} className="font-semibold underline">
+              {isMobileStudent ? "Cambiar estudiante" : "Cambiar perfil"}
+            </Link>
           </div>}
           <div className="mb-6 flex items-center justify-between md:hidden">
             <span className="truncate text-xs text-muted">{displayName}</span>
