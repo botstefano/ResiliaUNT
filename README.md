@@ -36,7 +36,7 @@ Esta separación evita repetir conteos de metas en cada hábito y evita confundi
 - **KPI 1 — Resiliencia:** promedio del puntaje registrado en las evaluaciones del período. El rango `0–100` está modelado para la escala de 25 ítems; confirmar instrumento y protocolo local antes de usar datos reales.
 - **KPI 2 — Pensamientos intrusivos:** promedio de frecuencia normalizada a 30 días: `conteo / días_de_referencia × 30`.
 - **KPI 3 — Cumplimiento de metas:** porcentaje de metas cuyo último estado observado dentro del período está marcado como cumplido. Cada meta cuenta una sola vez; las actualizaciones repetidas no inflan el numerador ni el denominador.
-- **KPI 4 — Red de apoyo activa:** porcentaje de evaluaciones del período que reportan `red_apoyo_activa = true`. Contactos e interacciones se muestran como variables complementarias, no como sustitutos del KPI.
+- **KPI 4 — Red de apoyo activa:** porcentaje de estudiantes con valoración registrada en el período cuya última valoración indica `red_apoyo_activa = true`. Cada estudiante cuenta una sola vez en el denominador; las valoraciones repetidas no aumentan su peso. Contactos e interacciones se muestran como variables complementarias y usan también la última valoración disponible por estudiante.
 
 Estas definiciones deben contrastarse con la rúbrica/instrumento oficial del proyecto antes de usar resultados en un informe institucional.
 
