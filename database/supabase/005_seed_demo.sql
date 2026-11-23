@@ -50,7 +50,13 @@ join oltp_resiliencia.terapeuta t
     else 'DEMO-TER-02'
   end
 where e.codigo_universitario like 'DEMO-%'
-on conflict (id_terapeuta, id_estudiante) do update set activo = excluded.activo;
+  and not exists (
+    select 1
+    from oltp_resiliencia.terapeuta_estudiante te
+    where te.id_terapeuta = t.id_terapeuta
+      and te.id_estudiante = e.id_estudiante
+      and te.activo = true
+  );
 
 -- Una evaluación por estudiante y mes del año sintético 2026 (enero a octubre).
 insert into oltp_resiliencia.evaluacion_clinica
