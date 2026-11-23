@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Activity, BarChart3, BookOpen, Bot, CalendarClock, Check, CircleAlert, Compass, Leaf, MessageCircle, Send, ShieldCheck, Target, X } from "lucide-react";
+import { BarChart3, BookOpen, Bot, CalendarClock, Check, CircleAlert, Compass, Leaf, MessageCircle, Send, ShieldCheck, Target, X } from "lucide-react";
 
 type Role = "estudiante" | "terapeuta";
 type ChatMessage = { role: "user" | "assistant"; content: string; kind?: string; offerContact?: boolean; showSafetyLinks?: boolean };
