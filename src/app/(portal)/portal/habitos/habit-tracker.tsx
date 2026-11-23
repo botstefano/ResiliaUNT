@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type Habit = { id_habito: number; nombre: string; categoria: string };
 type RecordRow = { id_registro_habito: number; id_habito: number; intensidad: string; completado: boolean };
@@ -22,8 +22,9 @@ export default function HabitTracker() {
     if (!response.ok) setMessage(data.error || "No se pudieron cargar los hábitos.");
     else {
       setPayload(data);
-      if (!habitId && data.habits.length) setHabitId(String(data.habits[0].id_habito));
-      const current = data.records.find((row: RecordRow) => String(row.id_habito) === habitId);
+      const activeHabitId = habitId || (data.habits.length ? String(data.habits[0].id_habito) : "");
+      if (!habitId && activeHabitId) setHabitId(activeHabitId);
+      const current = data.records.find((row: RecordRow) => String(row.id_habito) === activeHabitId);
       if (current) { setIntensity(current.intensidad); setCompleted(current.completado); }
     }
     setLoading(false);
@@ -31,7 +32,7 @@ export default function HabitTracker() {
 
   useEffect(() => { load().catch(() => { setMessage("Error de conexión."); setLoading(false); }); }, []);
 
-  async function save(event: React.FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!payload || !habitId) return;
     setSaving(true); setMessage("");
@@ -58,7 +59,13 @@ export default function HabitTracker() {
           <form onSubmit={save} className="mt-6 space-y-5">
             <div>
               <label htmlFor="habit" className="mb-2 block text-sm font-medium">Hábito</label>
-              <select id="habit" value={habitId} onChange={(event) => setHabitId(event.target.value)} required className="w-full rounded-xl border border-line px-3 py-3">
+              <select id="habit" value={habitId} onChange={(event) => {
+                  const nextId = event.target.value;
+                  setHabitId(nextId);
+                  const current = payload?.records.find((row) => String(row.id_habito) === nextId);
+                  setIntensity(current?.intensidad || "Media");
+                  setCompleted(current?.completado ?? true);
+                }} required className="w-full rounded-xl border border-line px-3 py-3">
                 {(payload?.habits ?? []).map((habit) => <option key={habit.id_habito} value={habit.id_habito}>{habit.nombre} · {habit.categoria}</option>)}
               </select>
             </div>
