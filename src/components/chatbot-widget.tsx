@@ -67,7 +67,9 @@ export default function ChatbotWidget({ role }: { role: Role }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: content,
-          history: prior.filter((message) => message.kind !== "pending").slice(-8).map(({ role: messageRole, content: messageContent }) => ({ role: messageRole, content: messageContent })),
+          history: prior.some((message) => message.role === "assistant" && (message.kind === "bridge" || message.kind === "crisis"))
+            ? []
+            : prior.filter((message) => message.kind !== "pending").slice(-8).map(({ role: messageRole, content: messageContent }) => ({ role: messageRole, content: messageContent })),
         }),
       });
       const result = await response.json();
