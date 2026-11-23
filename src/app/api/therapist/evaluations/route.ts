@@ -19,12 +19,12 @@ export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Revisa los valores de la evaluación." }, { status: 400 });
 
-  const { data: assignment } = await supabase.from("terapeuta_estudiante")
+  const { data: assignment } = await supabase.schema("oltp_resiliencia").from("terapeuta_estudiante")
     .select("id_asignacion").eq("id_terapeuta", profile.id_terapeuta)
     .eq("id_estudiante", parsed.data.id_estudiante).eq("activo", true).maybeSingle();
   if (!assignment) return NextResponse.json({ error: "El estudiante no pertenece a tu cartera asignada." }, { status: 403 });
 
-  const { data, error } = await supabase.from("evaluacion_clinica").upsert({
+  const { data, error } = await supabase.schema("oltp_resiliencia").from("evaluacion_clinica").upsert({
     ...parsed.data,
     id_terapeuta: profile.id_terapeuta,
     id_sala: null,
