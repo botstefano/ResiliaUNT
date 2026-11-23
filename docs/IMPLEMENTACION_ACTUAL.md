@@ -15,6 +15,7 @@
 - Perfil 360 por estudiante autorizado, con tendencias e historial de hábitos, metas, red de apoyo y sesiones.
 - APIs con validación de entrada, comprobación de perfil y uso de cliente Supabase vinculado a la sesión.
 - Consultas explícitas a los esquemas PostgreSQL `oltp_resiliencia` y `datamart_resiliencia` desde Supabase JS.
+- Tipos TypeScript generados desde PostgreSQL para las 23 tablas de aplicación; clientes Supabase server, browser y admin usan el contrato `Database`.
 - Creación atómica de metas y de su primer estado, sin dejar metas parcialmente insertadas.
 - RLS como segunda capa de autorización en la base de datos.
 - Panel administrativo con clave de servicio confinada al servidor y validación de rol en cada operación.
@@ -47,7 +48,7 @@
 - El proyecto Supabase `ResiliaUNT` está conectado; se aplicaron las migraciones 001–004, 007–011 y se cargó el seed exclusivamente sintético.
 - La base contiene 40 estudiantes demo, 400 evaluaciones clínicas, 800 registros de hábitos, 80 metas, 800 estados de meta y 400 valoraciones de red de apoyo. Los cuatro hechos del DataMart fueron cotejados con OLTP y no se detectaron claves huérfanas.
 - RLS está habilitado en todas las tablas de la aplicación; los asesores de seguridad y salud de Supabase no reportan avisos. Los índices de soporte de claves foráneas se añadieron en la migración 011.
-- Falta agregar `oltp_resiliencia` y `datamart_resiliencia` a **API → Exposed schemas**. No exponer `resilia_private`. También faltan configuración de URL/callbacks de Auth, creación de la cuenta administradora inicial, variables de entorno de Render y pruebas E2E con cuentas separadas.
+- El propietario del proyecto confirmó que `oltp_resiliencia` y `datamart_resiliencia` ya están agregados a **API → Exposed schemas**. `resilia_private` debe permanecer sin exponer. Quedan pendientes la configuración de URL/callbacks de Auth, la creación de la cuenta administradora inicial, las variables de entorno de Render y las pruebas E2E con cuentas separadas.
 - El CI de GitHub Actions valida tipos, pruebas unitarias, lint y compilación de producción; no reemplaza las pruebas E2E del despliegue.
 - El repositorio mantiene visibilidad pública; como el contenido actual es sintético puede conservarse así. Nunca subir datos personales ni credenciales.
 - Este commit no representa una validación de despliegue ni una autorización institucional para operar con datos reales.
