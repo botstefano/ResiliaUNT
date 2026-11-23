@@ -66,6 +66,80 @@ function getGroqConfig(role: "estudiante" | "terapeuta") {
   return { apiKey, model, endpoint: baseUrl + "/chat/completions" };
 }
 
+
+function normalizeLookup(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/**
+ * Nexo receives portfolio aggregates by default. Individual synthetic student
+ * records are added only when the therapist asks about that student/list.
+ * This keeps prompts below Groq's free-tier per-minute token ceiling.
+ */
+function compactTherapistContext(context: any, message: string) {
+  const data = context?.datos;
+  if (!data) return context;
+
+  const query = normalizeLookup(message);
+  const roster = Array.isArray(data.estudiantes) ? data.estudiantes : [];
+  const mentionedStudents = roster.filter((student: any) => {
+    const code = normalizeLookup(String(student.codigo ?? ""));
+    const name = normalizeLookup(String(student.nombre ?? ""));
+    return (code.length >= 4 && query.includes(code)) || (name.length >= 6 && query.includes(name));
+  });
+  const asksForRoster = /(lista|listado|nombres|estudiantes asignados|cartera completa)/.test(query);
+  const asksForMissingHabits = /(sin registro|no registra|no registran|registro reciente|ultimo registro|habito reciente|quien no|quienes no)/.test(query);
+  const missingHabitStudents = Array.isArray(data.registrosHabitos?.sinRegistroReciente)
+    ? data.registrosHabitos.sinRegistroReciente
+    : [];
+
+  const studentsForAnswer = asksForRoster
+    ? roster.slice(0, 20).map((student: any) => ({
+      codigo: student.codigo, nombre: student.nombre, ciclo: student.ciclo, turno: student.turno,
+    }))
+    : mentionedStudents;
+
+  const habits = (Array.isArray(data.habitos) ? data.habitos : []).slice(0, 8).map((habit: any) => ({
+    nombre: habit.nombre,
+    registros: habit.registros,
+    completados: habit.completados,
+    participantes: habit.participantes,
+    diasRegistradosMesActual: habit.diasRegistradosMesActual,
+    diasCompletadosMesActual: habit.diasCompletadosMesActual,
+    intensidad: habit.intensidad,
+    resilienciaMediaDeParticipantes: habit.resilienciaMediaDeParticipantes,
+    pensamientosIntrusivos30DiasMediaDeParticipantes: habit.pensamientosIntrusivos30DiasMediaDeParticipantes,
+  }));
+
+  return {
+    rol: context.rol,
+    terapeuta: context.terapeuta,
+    alcance: context.alcance,
+    totalEstudiantes: context.totalEstudiantes,
+    periodoAnalisisDias: context.periodoAnalisisDias,
+    avisoAnalitico: context.avisoAnalitico,
+    datos: {
+      aggregate: data.aggregate,
+      ...(studentsForAnswer.length ? { estudiantesConsultados: studentsForAnswer } : {}),
+      ...(asksForRoster ? { listadoLimitadoA20: roster.length > 20 } : {}),
+      porCiclo: data.porCiclo,
+      porTurno: data.porTurno,
+      tendenciaMensual: Array.isArray(data.tendenciaMensual) ? data.tendenciaMensual.slice(-6) : [],
+      habitos,
+      metas: data.metas,
+      registrosHabitos: {
+        total: data.registrosHabitos?.total ?? 0,
+        completados: data.registrosHabitos?.completados ?? 0,
+        estudiantesSinRegistroRecienteTotal: missingHabitStudents.length,
+        ...(asksForMissingHabits ? {
+          estudiantesSinRegistroReciente: missingHabitStudents.slice(0, 20),
+          listadoLimitadoA20: missingHabitStudents.length > 20,
+        } : {}),
+      },
+    },
+  };
+}
+
 function safeBridgeReply() {
   return "Gracias por contármelo. Entiendo que esta inquietud puede ser importante para ti. Puedo ayudarte con el uso de ResiliaUNT y con información general de la plataforma, pero no puedo evaluar síntomas ni darte orientación clínica personalizada. Tu terapeuta es la persona indicada para conversar sobre esto. Puedes solicitar que se registre un aviso de contacto desde este chat.";
 }
@@ -132,7 +206,13 @@ export async function POST(request: Request) {
       }, { status: 503 });
     }
 
-    const history = parsed.data.history.slice(-8).map((item) => ({ role: item.role, content: item.content }));
+    const modelContext = role === "terapeuta"
+      ? compactTherapistContext(context, parsed.data.message)
+      : context;
+    const history = parsed.data.history.slice(-4).map((item) => ({
+      role: item.role,
+      content: item.content.slice(0, 600),
+    }));
     const response = await fetch(config.endpoint, {
       method: "POST",
       headers: {
@@ -142,7 +222,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: config.model,
         messages: [
-          { role: "system", content: systemPrompts[role] + "\n\nCONTEXTO ESTRUCTURADO AUTORIZADO (JSON):\n" + JSON.stringify(context) },
+          { role: "system", content: systemPrompts[role] + "\n\nCONTEXTO ESTRUCTURADO AUTORIZADO (JSON):\n" + JSON.stringify(modelContext) },
           ...history,
           { role: "user", content: parsed.data.message },
         ],
@@ -159,7 +239,9 @@ export async function POST(request: Request) {
       console.error("Groq request failed:", response.status, errorText.slice(0, 500));
       return NextResponse.json({ error: response.status === 429
         ? "El servicio de IA alcanzó su límite temporal. Inténtalo más tarde."
-        : "No se pudo obtener una respuesta del modelo de IA. Inténtalo de nuevo." }, { status: 502 });
+        : response.status === 413
+          ? "La consulta supera el límite de contexto del modelo gratuito. Prueba con una pregunta más concreta."
+          : "No se pudo obtener una respuesta del modelo de IA. Inténtalo de nuevo." }, { status: 502 });
     }
     const payload = await response.json().catch(() => null);
     const reply = payload?.choices?.[0]?.message?.content;
