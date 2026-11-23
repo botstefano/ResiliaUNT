@@ -74,7 +74,7 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
   }
 
   const from = daysAgo(periodDays);
-  const [clinical, habitFacts, goalFacts, networkFacts, habitDimensions, intensityDimensions, networkDimensions] = await Promise.all([
+  const [clinical, habitFacts, goalFacts, networkFacts, habitDimensions, intensityDimensions, networkDimensions, goalDimensions] = await Promise.all([
     fetchAll(() => admin.schema(DM).from("fact_evaluacion_clinica")
       .select("tiempo_key,estudiante_key,indice_resiliencia,pensamientos_intrusivos,periodo_referencia_dias")
       .in("estudiante_key", keys).gte("tiempo_key", from).order("tiempo_key")),
@@ -90,14 +90,16 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
     admin.schema(DM).from("dim_habito").select("habito_key,nombre,categoria"),
     admin.schema(DM).from("dim_intensidad").select("intensidad_key,nivel"),
     admin.schema(DM).from("dim_red_apoyo").select("red_key,red_apoyo_activa,estado"),
+    admin.schema(DM).from("dim_meta_categoria").select("meta_key,categoria"),
   ]);
-  if (habitDimensions.error || intensityDimensions.error || networkDimensions.error) {
+  if (habitDimensions.error || intensityDimensions.error || networkDimensions.error || goalDimensions.error) {
     throw new Error("No se pudieron consultar las dimensiones del DataMart.");
   }
 
   const habitName = new Map<number, string>((habitDimensions.data ?? []).map((r: any) => [Number(r.habito_key), r.nombre]));
   const intensityName = new Map<number, string>((intensityDimensions.data ?? []).map((r: any) => [Number(r.intensidad_key), r.nivel]));
   const networkActive = new Map<number, boolean | null>((networkDimensions.data ?? []).map((r: any) => [Number(r.red_key), r.red_apoyo_activa]));
+  const goalCategory = new Map<number, string>((goalDimensions.data ?? []).map((r: any) => [Number(r.meta_key), r.categoria]));
 
   const studentByKey = new Map<number, ChatStudent>();
   for (const student of students) {
@@ -136,7 +138,11 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
   const goalsDone = goalRows.filter((row) => Number(row.metas_cumplidas) === 1).length;
   const goalsPending = goalRows.filter((row) => Number(row.metas_pendientes) === 1).length;
 
-  const habitGroups = new Map<string, { registros: number; completados: number; participantes: Set<number>; intensidad: Map<string, number> }>();
+  const habitGroups = new Map<string, {
+    registros: number; completados: number; participantes: Set<number>;
+    participantesConCompletado: Set<number>; intensidad: Map<string, number>;
+    registrosMesActual: number; completadosMesActual: number;
+  }>();
   const latestHabitDate = new Map<number, number>();
   const currentMonthStart = dateInt(todayInPeru().slice(0, 7) + "-01");
   let currentMonthRecords = 0;
@@ -145,17 +151,25 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
     const studentKey = Number(row.estudiante_key);
     const habit = habitName.get(Number(row.habito_key)) ?? "Hábito no identificado";
     const intensity = intensityName.get(Number(row.intensidad_key)) ?? "No especificada";
-    if (!habitGroups.has(habit)) habitGroups.set(habit, { registros: 0, completados: 0, participantes: new Set(), intensidad: new Map() });
+    if (!habitGroups.has(habit)) habitGroups.set(habit, {
+      registros: 0, completados: 0, participantes: new Set(),
+      participantesConCompletado: new Set(), intensidad: new Map(),
+      registrosMesActual: 0, completadosMesActual: 0,
+    });
     const group = habitGroups.get(habit)!;
     group.registros += 1;
-    group.completados += Number(row.completado_count) === 1 ? 1 : 0;
+    const completed = Number(row.completado_count) === 1;
+    group.completados += completed ? 1 : 0;
     group.participantes.add(studentKey);
+    if (completed) group.participantesConCompletado.add(studentKey);
     group.intensidad.set(intensity, (group.intensidad.get(intensity) ?? 0) + 1);
     const key = Number(row.tiempo_key);
     if (!latestHabitDate.has(studentKey) || key > latestHabitDate.get(studentKey)!) latestHabitDate.set(studentKey, key);
     if (key >= currentMonthStart) {
       currentMonthRecords += 1;
-      currentMonthCompleted += Number(row.completado_count) === 1 ? 1 : 0;
+      currentMonthCompleted += completed ? 1 : 0;
+      group.registrosMesActual += 1;
+      group.completadosMesActual += completed ? 1 : 0;
     }
   }
 
@@ -164,6 +178,8 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
   const intrusive = clinicalValues.map((r) => Number(r.pensamientos_intrusivos) * 30 / Math.max(1, Number(r.periodo_referencia_dias)));
   const activeNetworks = [...latestNetwork.values()].filter((r) => networkActive.get(Number(r.red_key)) === true);
   const assessedNetworks = [...latestNetwork.values()].filter((r) => networkActive.get(Number(r.red_key)) !== null && networkActive.get(Number(r.red_key)) !== undefined);
+  const latestContacts = [...latestNetwork.values()].map((r) => Number(r.contactos_activos));
+  const latestInteractions = [...latestNetwork.values()].map((r) => Number(r.interacciones_sociales));
 
   const roster = students.map((student) => {
     const key = keyById.get(student.id_estudiante);
@@ -191,6 +207,39 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
   const cycleSummary = [...cycleGroups.entries()].sort((a, b) => a[0] - b[0]).map(([ciclo, values]) => ({
     ciclo, estudiantesEvaluados: values.length, resilienciaPromedio: average(values),
   }));
+  const shiftGroups = new Map<string, number[]>();
+  for (const row of roster) {
+    if (!row.turno || row.resiliencia === null) continue;
+    if (!shiftGroups.has(row.turno)) shiftGroups.set(row.turno, []);
+    shiftGroups.get(row.turno)!.push(row.resiliencia);
+  }
+  const shiftSummary = [...shiftGroups.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([turno, values]) => ({
+    turno, estudiantesEvaluados: values.length, resilienciaPromedio: average(values),
+  }));
+  const habitSummary = [...habitGroups.entries()].map(([nombre, value]) => {
+    const withEvaluation = [...value.participantesConCompletado]
+      .map((studentKey) => latestClinical.get(studentKey)).filter(Boolean);
+    const habitResilience = withEvaluation.map((row: any) => Number(row.indice_resiliencia));
+    const habitIntrusive = withEvaluation.map((row: any) => Number(row.pensamientos_intrusivos) * 30 / Math.max(1, Number(row.periodo_referencia_dias)));
+    return {
+      nombre, registros: value.registros, completados: value.completados,
+      participantes: value.participantes.size, participantesConRegistroCompletado: value.participantesConCompletado.size,
+      diasRegistradosMesActual: value.registrosMesActual, diasCompletadosMesActual: value.completadosMesActual,
+      intensidad: [...value.intensidad.entries()].map(([nivel, cantidad]) => ({ nivel, cantidad })),
+      resilienciaMediaDeParticipantes: average(habitResilience),
+      pensamientosIntrusivos30DiasMediaDeParticipantes: average(habitIntrusive),
+      nota: "Asociación descriptiva entre participantes con registros completados y su última medición; no demuestra efectividad ni causalidad.",
+    };
+  }).sort((a, b) => b.registros - a.registros);
+  const goalByCategory = new Map<string, { cumplidas: number; pendientes: number }>();
+  for (const row of goalRows) {
+    const category = goalCategory.get(Number(row.meta_key)) ?? "Sin categoría";
+    if (!goalByCategory.has(category)) goalByCategory.set(category, { cumplidas: 0, pendientes: 0 });
+    const bucket = goalByCategory.get(category)!;
+    if (Number(row.metas_cumplidas) === 1) bucket.cumplidas += 1;
+    if (Number(row.metas_pendientes) === 1) bucket.pendientes += 1;
+  }
+  const goalsByCategory = [...goalByCategory.entries()].map(([categoria, values]) => ({ categoria, ...values }));
 
   const monthlyTrend = [...monthlyStudent.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([month, byStudent]) => {
     const studentMeans = [...byStudent.values()].map(average).filter((value): value is number => value !== null);
@@ -209,16 +258,15 @@ async function fetchDataMart(admin: any, students: ChatStudent[], periodDays: nu
       metasObservadas: goalRows.length,
       redApoyoActivaPct: percent(activeNetworks.length, assessedNetworks.length),
       estudiantesConRedEvaluada: assessedNetworks.length,
+      contactosActivosPromedio: average(latestContacts),
+      interaccionesSocialesPromedio: average(latestInteractions),
     },
     estudiantes: roster,
     porCiclo: cycleSummary,
+    porTurno: shiftSummary,
     tendenciaMensual: monthlyTrend,
-    habitos: [...habitGroups.entries()].map(([nombre, value]) => ({
-      nombre, registros: value.registros, completados: value.completados,
-      participantes: value.participantes.size,
-      intensidad: [...value.intensidad.entries()].map(([nivel, cantidad]) => ({ nivel, cantidad })),
-    })).sort((a, b) => b.registros - a.registros),
-    metas: { cumplidas: goalsDone, pendientes: goalsPending, porcentajeCumplimiento: percent(goalsDone, goalRows.length) },
+    habitos: habitSummary,
+    metas: { cumplidas: goalsDone, pendientes: goalsPending, porcentajeCumplimiento: percent(goalsDone, goalRows.length), porCategoria: goalsByCategory },
     registrosHabitos: {
       total: currentMonthRecords, completados: currentMonthCompleted,
       sinRegistroReciente: withoutRecentHabit.map((s) => ({ codigo: s.codigo, nombre: s.nombre, ciclo: s.ciclo, turno: s.turno, ultimoRegistro: s.ultimoRegistroHabito })),
