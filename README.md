@@ -114,7 +114,7 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 
 - El repositorio no debe contener datos reales, nombres reales, mediciones clínicas, correos, UUID de usuarios, JWT, claves Supabase ni archivos `.env`.
 - `005_seed_demo.sql` solo crea identidades y registros demostrativos sintéticos. No utilizar como evidencia académica ni como datos clínicos.
-- Supabase Auth crea perfiles con rol `pendiente`; los permisos se asignan manualmente.
+- Supabase Auth crea perfiles con rol `pendiente`; tras el bootstrap del primer administrador, las habilitaciones ordinarias se realizan desde `/portal/admin`.
 - Las tablas OLTP y del DataMart tienen RLS. Las consultas privilegiadas de servidor deben comprobar usuario, rol y estudiantes asignados antes de usar la clave `service_role`.
 - No almacenar notas clínicas narrativas, diagnósticos o relatos traumáticos en campos libres de esta primera versión.
 - Antes de producción: revisión de privacidad institucional, consentimiento informado, retención/eliminación, protocolo de incidentes, accesibilidad, autorización de responsables del servicio y revisión profesional de instrumentos.
