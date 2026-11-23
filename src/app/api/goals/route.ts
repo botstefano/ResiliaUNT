@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
+import { todayInPeru } from "@/lib/dates";
 
 const createGoalSchema = z.object({
   categoria: z.string().trim().min(2).max(50),
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
   }).select("id_meta").single();
   if (error || !goal) return NextResponse.json({ error: "No se pudo crear la meta." }, { status: 400 });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInPeru();
   const stateResult = await supabase.from("registro_meta").insert({ id_meta: goal.id_meta, fecha: today, estado: "Pendiente" });
   if (stateResult.error) return NextResponse.json({ error: "La meta se creó, pero no se pudo registrar su estado inicial. Contacta al administrador." }, { status: 500 });
 
