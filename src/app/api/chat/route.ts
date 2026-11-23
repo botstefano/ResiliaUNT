@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       if (CRISIS_PATTERNS.some((pattern) => pattern.test(userText))) {
         return NextResponse.json(await handleStudentCrisis(admin, profile.id_estudiante!));
       }
-      if (SENSITIVE_PATTERNS.some((pattern) => pattern.test(parsed.data.message))) {
+      if (SENSITIVE_PATTERNS.some((pattern) => pattern.test(userText))) {
         return NextResponse.json({
           kind: "bridge",
           reply: safeBridgeReply(),
