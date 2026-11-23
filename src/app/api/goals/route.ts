@@ -44,20 +44,16 @@ export async function POST(request: Request) {
   const parsed = createGoalSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Revisa la categoría, descripción y fecha objetivo." }, { status: 400 });
 
-  const { data: goal, error } = await supabase.schema("oltp_resiliencia").from("meta_personal").insert({
-    id_estudiante: profile.id_estudiante,
-    categoria: parsed.data.categoria,
-    descripcion: parsed.data.descripcion,
-    fecha_objetivo: parsed.data.fecha_objetivo || null,
-  }).select("id_meta").single();
-  if (error || !goal) return NextResponse.json({ error: "No se pudo crear la meta." }, { status: 400 });
-
-  const today = todayInPeru();
-  const stateResult = await supabase.schema("oltp_resiliencia").from("registro_meta").insert({ id_meta: goal.id_meta, fecha: today, estado: "Pendiente" });
-  if (stateResult.error) return NextResponse.json({ error: "La meta se creó, pero no se pudo registrar su estado inicial. Contacta al administrador." }, { status: 500 });
+  const { data: idMeta, error } = await supabase.rpc("crear_meta_personal_resilia", {
+    p_categoria: parsed.data.categoria,
+    p_descripcion: parsed.data.descripcion,
+    p_fecha_objetivo: parsed.data.fecha_objetivo || null,
+    p_fecha_estado: todayInPeru(),
+  });
+  if (error || !idMeta) return NextResponse.json({ error: "No se pudo crear la meta y su estado inicial. Comprueba que aplicaste 008_meta_transaccional.sql." }, { status: 400 });
 
   const datamartRefreshed = await refreshDataMart();
-  return NextResponse.json({ id_meta: goal.id_meta, datamartRefreshed }, { status: 201 });
+  return NextResponse.json({ id_meta: idMeta, datamartRefreshed }, { status: 201 });
 }
 
 export async function PUT(request: Request) {
