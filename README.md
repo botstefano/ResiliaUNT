@@ -141,7 +141,7 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 - Acceso con Supabase Auth y recuperación de contraseña por correo; el usuario nuevo queda con rol `pendiente` hasta habilitación administrativa.
 - Portal estudiante: KPI personales, registro diario de hábitos, metas y consulta de sesiones propias.
 - Portal terapeuta: panel analítico, cartera asignada, Perfil 360 individual, evaluaciones clínicas, valoración de red de apoyo, programación y actualización de estado de sesiones, selección de sala y correlaciones exploratorias hábitos–indicadores (descriptivas, no causales). El panel administrativo también puede consultar el tablero general.
-- Portal administrador: invitaciones por correo, habilitación de perfiles, vinculación de cuentas con estudiantes/terapeutas y administración de asignaciones con historial.
+- Portal administrador: alta de estudiantes, terapeutas y salas; invitaciones por correo; habilitación de perfiles; vinculación de cuentas y administración de asignaciones con historial.
 - Rutas API con validación de entrada, comprobación de rol y alcance; la clave `service_role` permanece en servidor.
 - ETL con UPSERT de dimensiones y refresco transaccional de las cuatro tablas de hechos.
 - Exportación CSV de los KPI y variables complementarias, con agregados y sin identificadores personales.

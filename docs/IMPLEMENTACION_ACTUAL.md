@@ -3,7 +3,7 @@
 ## Base funcional añadida
 
 - Inicio de sesión y recuperación de contraseña con Supabase Auth; el perfil nuevo queda pendiente hasta asignación administrativa.
-- Panel administrativo protegido para invitar usuarios por correo, habilitar perfiles, vincular estudiantes/terapeutas y gestionar asignaciones con historial.
+- Panel administrativo protegido para crear estudiantes, terapeutas y salas; invitar usuarios por correo; habilitar perfiles; vincular estudiantes/terapeutas y gestionar asignaciones con historial.
 - Separación de portal de estudiante y portal profesional según el rol de `perfiles_app`, con guardas por rol también a nivel de página.
 - Tablero con los cuatro KPI oficiales, tendencia mensual y variables complementarias separadas. El KPI de red activa utiliza la última valoración por estudiante dentro del período para evitar ponderación por frecuencia de evaluación.
 - Correlaciones exploratorias de Pearson hábitos–resiliencia y hábitos–pensamientos intrusivos. Las observaciones mensuales se agregan por estudiante antes de calcular, se exige un mínimo de 10 estudiantes con datos emparejados y se presentan como asociaciones descriptivas, no causales.
@@ -44,4 +44,5 @@
 - Los rangos y definiciones de los instrumentos deben ser confirmados por el responsable profesional e institucional antes de medir a estudiantes reales.
 - El código requiere configuración de un proyecto Supabase, revisión de RLS en ese proyecto y variables seguras en Render para ejecutarse de extremo a extremo.
 - El CI de GitHub Actions valida tipos, pruebas unitarias, lint y compilación de producción; todavía no se ha conectado ni probado contra un proyecto Supabase real.
+- El repositorio de GitHub mantiene visibilidad pública; cámbialo a privado antes de incluir documentación interna o materiales institucionales y nunca subas datos reales ni credenciales.
 - Este commit no representa una validación de despliegue ni una autorización institucional para operar con datos reales.

@@ -77,7 +77,7 @@ Configura `.env.local` con:
 - Exportación CSV agregada del resumen, sin nombres ni códigos de estudiantes.
 - Portal estudiante: registro de hábitos, metas y consulta de sesiones propias.
 - Portal terapeuta: cartera asignada, Perfil 360, registro de evaluación clínica y red de apoyo, selección de sala, programación y actualización de estado de sesiones.
-- Portal administrador: invitación por correo, activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
+- Portal administrador: alta de estudiantes, terapeutas y salas; invitación por correo; activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
 - ETL OLTP → DataMart, refresco tras registros y script de validación.
 
 ## 6. Antes de producción
