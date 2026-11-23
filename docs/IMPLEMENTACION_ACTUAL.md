@@ -18,7 +18,7 @@
 - RLS como segunda capa de autorización en la base de datos.
 - Panel administrativo con clave de servicio confinada al servidor y validación de rol en cada operación.
 - Refresco del DataMart por RPC de servidor después de operaciones que generan hechos.
-- Pruebas unitarias de las funciones de normalización y cálculo de KPI.
+- Pruebas unitarias de normalización, porcentajes, selección de última observación y correlación de Pearson.
 - Workflow de GitHub Actions para TypeScript, pruebas, ESLint y build.
 - Endpoint `/api/health` para comprobación de disponibilidad del servicio.
 
