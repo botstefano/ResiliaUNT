@@ -85,9 +85,10 @@ En el SQL Editor, ejecutar en este orden:
 3. `database/supabase/003_security_rls.sql`
 4. `database/supabase/007_permisos_escritura_api.sql` (permisos mínimos de escritura para el portal profesional).
 5. `database/supabase/008_meta_transaccional.sql` (creación atómica de meta y estado inicial).
-6. `database/supabase/004_etl.sql`
-7. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
-8. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
+6. `database/supabase/009_admin_asignaciones.sql` (historial de asignaciones y permisos del panel administrativo).
+7. `database/supabase/004_etl.sql`
+8. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
+9. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
 
 Luego, en **Project Settings → API → Exposed schemas**, agregar `oltp_resiliencia` y `datamart_resiliencia`, además de `public`. No exponer esquemas adicionales sin revisar permisos.
 
