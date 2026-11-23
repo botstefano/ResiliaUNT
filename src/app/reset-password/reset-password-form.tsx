@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { AuthChangeEvent, AuthError, Session } from "@supabase/supabase-js";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -17,12 +18,12 @@ export default function ResetPasswordForm() {
   useEffect(() => {
     let active = true;
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.getSession().then(({ data, error: sessionError }) => {
+    supabase.auth.getSession().then(({ data, error: sessionError }: { data: { session: Session | null }; error: AuthError | null }) => {
       if (!active) return;
       if (sessionError || !data.session) setError("El enlace no es válido o ha expirado. Solicita uno nuevo.");
       setReady(true);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY" && session) {
         setError("");
