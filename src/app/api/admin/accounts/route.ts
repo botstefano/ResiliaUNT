@@ -159,6 +159,20 @@ export async function POST(request: Request) {
 
   try {
     const admin = createSupabaseAdminClient();
+
+    const [therapistResult, studentResult] = await Promise.all([
+      admin.schema("oltp_resiliencia").from("terapeuta")
+        .select("id_terapeuta").eq("id_terapeuta", parsed.data.id_terapeuta).eq("activo", true).maybeSingle(),
+      admin.schema("oltp_resiliencia").from("estudiante")
+        .select("id_estudiante").eq("id_estudiante", parsed.data.id_estudiante).eq("activo", true).maybeSingle(),
+    ]);
+    if (therapistResult.error || studentResult.error) {
+      return NextResponse.json({ error: "No se pudo validar la relación institucional." }, { status: 500 });
+    }
+    if (!therapistResult.data || !studentResult.data) {
+      return NextResponse.json({ error: "Solo se pueden asignar estudiantes y terapeutas activos." }, { status: 400 });
+    }
+
     const assignmentsTable = admin.schema("oltp_resiliencia").from("terapeuta_estudiante");
     const { data: existing, error: existingError } = await assignmentsTable
       .select("id_asignacion, id_terapeuta, id_estudiante, fecha_inicio, activo")
