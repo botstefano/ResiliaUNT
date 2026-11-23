@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- PostgREST schemas are normalized at this server-only boundary. */
 import "server-only";
 
 import { todayInPeru } from "@/lib/dates";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- PostgREST schemas are normalized at this server-only boundary. */
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";

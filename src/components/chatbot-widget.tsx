@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Bot, CalendarClock, Check, CircleAlert, MessageCircle, Send, ShieldCheck, X } from "lucide-react";
 
 type Role = "estudiante" | "terapeuta";
@@ -30,13 +30,11 @@ export default function ChatbotWidget({ role }: { role: Role }) {
   const endRef = useRef<HTMLDivElement | null>(null);
   const isTherapist = role === "terapeuta";
 
-  const history = useMemo(() => messages.slice(-8).filter((message) => message.content.trim()), [messages]);
-
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, open, notice]);
 
-  async function loadAlerts() {
+  const loadAlerts = useCallback(async () => {
     if (!isTherapist) return;
     setLoadingAlerts(true);
     setAlertsError("");
@@ -48,11 +46,11 @@ export default function ChatbotWidget({ role }: { role: Role }) {
     } catch (error) {
       setAlertsError(error instanceof Error ? error.message : "Error de conexión.");
     } finally { setLoadingAlerts(false); }
-  }
+  }, [isTherapist]);
 
   useEffect(() => {
-    if (open && isTherapist) loadAlerts();
-  }, [open, isTherapist]);
+    if (open && isTherapist) void loadAlerts();
+  }, [open, isTherapist, loadAlerts]);
 
   async function send(event?: FormEvent<HTMLFormElement>, text?: string) {
     event?.preventDefault();

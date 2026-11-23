@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- PostgREST schemas are normalized at this server-only boundary. */
 import "server-only";
 
 import { todayInPeru } from "@/lib/dates";
@@ -13,8 +14,6 @@ type ChatStudent = {
   ciclo_academico: number | null;
   turno: string | null;
 };
-
-type ChatRole = "estudiante" | "terapeuta";
 
 const dateInt = (value: string) => Number(value.replaceAll("-", ""));
 function daysAgo(days: number): number {
