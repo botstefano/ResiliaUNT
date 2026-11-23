@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, BarChart3, CalendarDays, HeartHandshake, LogOut, Target } from "lucide-react";
+import { Activity, BarChart3, CalendarDays, HeartHandshake, LogOut, ShieldCheck, Target } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/auth/context";
 
@@ -17,6 +17,7 @@ export default function PortalShell({ children, role, displayName }: Props) {
     { href: "/portal/metas", label: "Mis metas", icon: Target, show: role === "estudiante" },
     { href: "/portal/sesiones", label: "Mis sesiones", icon: CalendarDays, show: role === "estudiante" || role === "terapeuta" },
     { href: "/portal/terapeuta", label: "Seguimiento", icon: HeartHandshake, show: role === "terapeuta" },
+    { href: "/portal/admin", label: "Administración", icon: ShieldCheck, show: role === "administrador" },
   ].filter((item) => item.show);
 
   async function signOut() {
