@@ -1,22 +1,19 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { todayInPeru } from "@/lib/dates";
 import Link from "next/link";
 
 type Student = { id_estudiante: number; codigo_universitario: string; nombre_visible: string; ciclo_academico: number | null; turno: string | null };
 type Session = { id_sesion: number; id_estudiante: number; inicio: string; estado: string; modalidad: string };
 type Tab = "clinical" | "support" | "session";
-const browserToday = () => {
-  const now = new Date();
-  return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-};
 
 export default function TherapistWorkspace() {
   const [students, setStudents] = useState<Student[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [studentId, setStudentId] = useState("");
   const [tab, setTab] = useState<Tab>("clinical");
-  const [date, setDate] = useState(browserToday());
+  const [date, setDate] = useState(todayInPeru());
   const [resilience, setResilience] = useState("50");
   const [intrusive, setIntrusive] = useState("0");
   const [period, setPeriod] = useState("30");
