@@ -89,4 +89,4 @@ Configura `.env.local` con:
 
 ## Validación que sigue pendiente
 
-La última ejecución del workflow de GitHub Actions sobre `main` pasó instalación de dependencias, TypeScript, pruebas unitarias, ESLint y build de producción. Esto valida el código, no la conectividad con el proyecto real: los scripts SQL aún deben ejecutarse en Supabase, revisar sus permisos allí y probar el flujo con cuentas de cada rol. Render todavía no está desplegado.
+El workflow de GitHub Actions ejecuta instalación, TypeScript, pruebas unitarias, ESLint y build de producción en cada actualización de `main`. Comprueba la pestaña **Actions** para consultar el resultado del commit actual. Esto valida el código, no la conectividad con el proyecto real: los scripts SQL aún deben ejecutarse en Supabase, revisar sus permisos allí y probar el flujo con cuentas de cada rol. Render todavía no está desplegado.
