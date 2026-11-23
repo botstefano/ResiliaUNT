@@ -2,7 +2,7 @@
 
 Sistema web para el seguimiento académico de resiliencia psicológica y crecimiento postraumático de estudiantes de **Ingeniería de Sistemas de la Universidad Nacional de Trujillo (UNT)** que reciben atención en el servicio oficial de terapia considerado por el proyecto.
 
-> **Estado del repositorio:** primera base funcional en construcción. No está conectado todavía a un proyecto Supabase real ni desplegado en Render.
+> **Estado del repositorio:** base funcional conectada al proyecto Supabase `ResiliaUNT`, con datos exclusivamente sintéticos y validaciones SQL ejecutadas. El despliegue en Render y las pruebas E2E de autenticación aún están pendientes.
 
 ## Alcance acordado
 
@@ -53,6 +53,8 @@ database/supabase/
   007_permisos_escritura_api.sql
   008_meta_transaccional.sql
   009_admin_asignaciones.sql
+  010_hardening_rls.sql
+  011_foreign_key_indexes.sql
 docs/
   GUIA_SUPABASE_RENDER.md
   IMPLEMENTACION_ACTUAL.md
@@ -104,10 +106,12 @@ En el SQL Editor, ejecutar en este orden:
 5. `database/supabase/008_meta_transaccional.sql` (creación atómica de meta y estado inicial).
 6. `database/supabase/009_admin_asignaciones.sql` (historial de asignaciones y permisos del panel administrativo).
 7. `database/supabase/004_etl.sql`
-8. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
-9. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
+8. `database/supabase/010_hardening_rls.sql` — helpers internos y políticas de autorización endurecidas.
+9. `database/supabase/011_foreign_key_indexes.sql` — índices de soporte para las relaciones.
+10. Opcional, únicamente para desarrollo: `database/supabase/005_seed_demo.sql`
+11. Tras ejecutar el ETL y, si corresponde, el seed, revisa `database/supabase/006_validaciones_kpi.sql`.
 
-Luego, en **Project Settings → API → Exposed schemas**, agregar `oltp_resiliencia` y `datamart_resiliencia`, además de `public`. No exponer esquemas adicionales sin revisar permisos.
+Luego, en **Project Settings → API → Exposed schemas**, mantener `public` y agregar `oltp_resiliencia` y `datamart_resiliencia`. No exponer `resilia_private`, que contiene funciones internas de autorización.
 
 ### Crear el primer administrador y habilitar cuentas
 
@@ -158,4 +162,4 @@ npm test
 npm run build
 ```
 
-El workflow de GitHub Actions ejecuta `npm install`, `npm run typecheck`, `npm test`, `npm run lint` y `npm run build` ante cada actualización de `main`. Consulta la pestaña **Actions** para ver el resultado del commit más reciente. Esta validación comprueba el código de aplicación, pero no ejecuta los scripts SQL contra un proyecto PostgreSQL real. La aplicación todavía necesita conectarse al proyecto Supabase institucional y desplegarse en Render; por tanto, no se declara validada en producción.
+El workflow de GitHub Actions ejecuta `npm install`, `npm run typecheck`, `npm test`, `npm run lint` y `npm run build` ante cada actualización de `main`. Consulta la pestaña **Actions** para ver el resultado del commit más reciente. El proyecto Supabase `ResiliaUNT` ya contiene el esquema y el seed sintético, y los clientes TypeScript usan `src/lib/supabase/database.types.ts`, generado desde las 23 tablas de aplicación. Todavía falta desplegar en Render, configurar sus variables de entorno, completar el bootstrap del primer administrador y probar el flujo E2E de Auth.
