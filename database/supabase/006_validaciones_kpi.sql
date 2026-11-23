@@ -20,7 +20,7 @@ with fechas_origen as (
   union select fecha from oltp_resiliencia.registro_habito
   union select fecha from oltp_resiliencia.registro_meta
   union select fecha from oltp_resiliencia.evaluacion_red_apoyo
-  union select inicio::date from oltp_resiliencia.sesion_terapia
+  union select (inicio at time zone 'America/Lima')::date from oltp_resiliencia.sesion_terapia
 )
 select distinct f.fecha
 from fechas_origen f
