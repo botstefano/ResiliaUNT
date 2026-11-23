@@ -5,6 +5,7 @@ import { todayInPeru } from "@/lib/dates";
 type ClinicalRow = { tiempo_key: number; indice_resiliencia: number; pensamientos_intrusivos: number; periodo_referencia_dias: number };
 type GoalRow = { id_meta_oltp: number; tiempo_key: number; metas_cumplidas: number; metas_pendientes: number };
 type NetworkRow = { tiempo_key: number; estudiante_key: number; red_key: number; contactos_activos: number; interacciones_sociales: number };
+type HabitRow = { tiempo_key: number; completado_count: number };
 type NetworkDimension = { red_key: number; red_apoyo_activa: boolean | null };
 
 export type DashboardSummary = {
@@ -18,6 +19,8 @@ export type DashboardSummary = {
   goalsCount: number;
   supportEvaluationsCount: number;
   supportStudentsCount: number;
+  habitsCompletionPct: number | null;
+  habitRecordsCount: number;
   trend: Array<{ month: string; resilience: number | null; intrusive: number | null }>;
 };
 
@@ -25,7 +28,7 @@ const dateKey = (date: Date) => Number(date.toISOString().slice(0, 10).replaceAl
 export const emptyDashboard: DashboardSummary = {
   resilience: null, intrusivePer30Days: null, goalCompletionPct: null, activeSupportPct: null,
   activeContactsAvg: null, interactionsAvg: null, evaluationsCount: 0, goalsCount: 0,
-  supportEvaluationsCount: 0, supportStudentsCount: 0, trend: [],
+  supportEvaluationsCount: 0, supportStudentsCount: 0, habitsCompletionPct: null, habitRecordsCount: 0, trend: [],
 };
 
 export async function getDashboardSummary(supabase: SupabaseClient): Promise<DashboardSummary> {
@@ -36,19 +39,21 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   const fromKey = dateKey(start);
   const toKey = Number(today.replaceAll("-", ""));
 
-  const [clinicalResult, goalsResult, networkResult] = await Promise.all([
+  const [clinicalResult, goalsResult, networkResult, habitsResult] = await Promise.all([
     supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica").select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
     supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta").select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
     supabase.schema("datamart_resiliencia").from("fact_red_apoyo").select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
+    supabase.schema("datamart_resiliencia").from("fact_registro_habitos").select("tiempo_key, completado_count").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
   ]);
 
-  if (clinicalResult.error || goalsResult.error || networkResult.error) {
+  if (clinicalResult.error || goalsResult.error || networkResult.error || habitsResult.error) {
     throw new Error("No se pudo leer el DataMart. Comprueba que se ejecutaron los scripts y que los esquemas están expuestos en Supabase.");
   }
 
   const clinical = (clinicalResult.data ?? []) as ClinicalRow[];
   const goals = (goalsResult.data ?? []) as GoalRow[];
   const network = (networkResult.data ?? []) as NetworkRow[];
+  const habits = (habitsResult.data ?? []) as HabitRow[];
   const redKeys = [...new Set(network.map((row) => row.red_key))];
   let networkDimensions: NetworkDimension[] = [];
 
@@ -99,6 +104,8 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     goalsCount: goalStates.length,
     supportEvaluationsCount: network.length,
     supportStudentsCount: latestNetworks.length,
+    habitsCompletionPct: percentage(habits.filter((row) => Number(row.completado_count) === 1).length, habits.length),
+    habitRecordsCount: habits.length,
     trend,
   };
 }
