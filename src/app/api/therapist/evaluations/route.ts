@@ -3,6 +3,8 @@ import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+
 const schema = z.object({
   id_estudiante: z.coerce.number().int().positive(),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
