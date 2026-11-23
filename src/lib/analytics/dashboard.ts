@@ -24,6 +24,27 @@ export type DashboardSummary = {
   trend: Array<{ month: string; resilience: number | null; intrusive: number | null }>;
 };
 
+type RangeableQuery<T> = {
+  range(from: number, to: number): PromiseLike<{
+    data: T[] | null;
+    error: { message: string } | null;
+  }>;
+};
+
+const PAGE_SIZE = 1000;
+
+/** PostgREST aplica un máximo por respuesta; pagina hasta recuperar todas las filas. */
+async function fetchAllRows<T>(createQuery: () => RangeableQuery<T>): Promise<T[]> {
+  const rows: T[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data, error } = await createQuery().range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw new Error(error.message);
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < PAGE_SIZE) return rows;
+  }
+}
+
 const dateKey = (date: Date) => Number(date.toISOString().slice(0, 10).replaceAll("-", ""));
 export const emptyDashboard: DashboardSummary = {
   resilience: null, intrusivePer30Days: null, goalCompletionPct: null, activeSupportPct: null,
@@ -39,21 +60,20 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   const fromKey = dateKey(start);
   const toKey = Number(today.replaceAll("-", ""));
 
-  const [clinicalResult, goalsResult, networkResult, habitsResult] = await Promise.all([
-    supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica").select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
-    supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta").select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
-    supabase.schema("datamart_resiliencia").from("fact_red_apoyo").select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
-    supabase.schema("datamart_resiliencia").from("fact_registro_habitos").select("tiempo_key, completado_count").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
+  const [clinical, goals, network, habits] = await Promise.all([
+    fetchAllRows<ClinicalRow>(() => supabase.schema("datamart_resiliencia").from("fact_evaluacion_clinica")
+      .select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias")
+      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("eval_key") as unknown as RangeableQuery<ClinicalRow>),
+    fetchAllRows<GoalRow>(() => supabase.schema("datamart_resiliencia").from("fact_seguimiento_meta")
+      .select("id_meta_oltp, tiempo_key, metas_cumplidas, metas_pendientes")
+      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("seguimiento_key") as unknown as RangeableQuery<GoalRow>),
+    fetchAllRows<NetworkRow>(() => supabase.schema("datamart_resiliencia").from("fact_red_apoyo")
+      .select("tiempo_key, estudiante_key, red_key, contactos_activos, interacciones_sociales")
+      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("red_apoyo_fact_key") as unknown as RangeableQuery<NetworkRow>),
+    fetchAllRows<HabitRow>(() => supabase.schema("datamart_resiliencia").from("fact_registro_habitos")
+      .select("tiempo_key, completado_count")
+      .gte("tiempo_key", fromKey).lte("tiempo_key", toKey).order("tiempo_key").order("registro_key") as unknown as RangeableQuery<HabitRow>),
   ]);
-
-  if (clinicalResult.error || goalsResult.error || networkResult.error || habitsResult.error) {
-    throw new Error("No se pudo leer el DataMart. Comprueba que se ejecutaron los scripts y que los esquemas están expuestos en Supabase.");
-  }
-
-  const clinical = (clinicalResult.data ?? []) as ClinicalRow[];
-  const goals = (goalsResult.data ?? []) as GoalRow[];
-  const network = (networkResult.data ?? []) as NetworkRow[];
-  const habits = (habitsResult.data ?? []) as HabitRow[];
   const redKeys = [...new Set(network.map((row) => row.red_key))];
   let networkDimensions: NetworkDimension[] = [];
 
