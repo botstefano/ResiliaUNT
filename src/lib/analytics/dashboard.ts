@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { average, normalizeTo30Days, percentage } from "@/lib/analytics/kpi";
+import { todayInPeru } from "@/lib/dates";
 
 type ClinicalRow = { tiempo_key: number; indice_resiliencia: number; pensamientos_intrusivos: number; periodo_referencia_dias: number };
 type GoalRow = { id_meta_oltp: number; tiempo_key: number; metas_cumplidas: number; metas_pendientes: number };
@@ -27,10 +28,12 @@ export const emptyDashboard: DashboardSummary = {
 };
 
 export async function getDashboardSummary(supabase: SupabaseClient): Promise<DashboardSummary> {
-  const today = new Date();
-  const start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 11, 1));
+  const today = todayInPeru();
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7));
+  const start = new Date(Date.UTC(year, month - 1 - 11, 1));
   const fromKey = dateKey(start);
-  const toKey = dateKey(today);
+  const toKey = Number(today.replaceAll("-", ""));
 
   const [clinicalResult, goalsResult, networkResult] = await Promise.all([
     supabase.from("fact_evaluacion_clinica").select("tiempo_key, indice_resiliencia, pensamientos_intrusivos, periodo_referencia_dias").gte("tiempo_key", fromKey).lte("tiempo_key", toKey),
