@@ -74,7 +74,8 @@ Configura `.env.local` con:
 - Login con Supabase Auth y perfiles pendientes por defecto.
 - Dashboard con los cuatro KPI y tendencia mensual.
 - Portal estudiante: registro de hábitos, metas y consulta de sesiones propias.
-- Portal terapeuta: cartera asignada, registro de evaluación clínica, valoración de red de apoyo trazable al profesional y programación de sesiones.
+- Portal terapeuta: cartera asignada, Perfil 360, registro de evaluación clínica y red de apoyo, selección de sala, programación y actualización de estado de sesiones.
+- Portal administrador: activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
 - ETL OLTP → DataMart, refresco tras registros y script de validación.
 
 ## 6. Antes de producción
@@ -87,4 +88,4 @@ Configura `.env.local` con:
 
 ## Validación que sigue pendiente
 
-El repositorio se ha revisado estáticamente y se ejecutó una prueba directa de la lógica de agregación de KPI. En este entorno no fue posible instalar dependencias de npm ni ejecutar PostgreSQL; por tanto aún no se declara aprobado `npm run build` ni se afirma que los scripts SQL se hayan ejecutado en un proyecto Supabase real.
+La última ejecución del workflow de GitHub Actions sobre `main` pasó instalación de dependencias, TypeScript, pruebas unitarias, ESLint y build de producción. Esto valida el código, no la conectividad con el proyecto real: los scripts SQL aún deben ejecutarse en Supabase, revisar sus permisos allí y probar el flujo con cuentas de cada rol. Render todavía no está desplegado.
