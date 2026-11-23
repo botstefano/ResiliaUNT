@@ -12,6 +12,7 @@ type AdminData = { accounts: Account[]; students: Student[]; therapists: Therapi
 export default function AdminWorkspace() {
   const [data, setData] = useState<AdminData | null>(null);
   const [selectedId, setSelectedId] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
   const [role, setRole] = useState<Role>("pendiente");
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -60,6 +61,29 @@ export default function AdminWorkspace() {
     setTherapistId(account.id_terapeuta ? String(account.id_terapeuta) : "");
     setMessage("");
     setError("");
+  }
+
+  async function inviteAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch("/api/admin/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "No se pudo enviar la invitación.");
+      setMessage(result.message || "Invitación enviada.");
+      setInviteEmail("");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo enviar la invitación.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveAccount(event: FormEvent<HTMLFormElement>) {
@@ -172,6 +196,28 @@ export default function AdminWorkspace() {
 
       <section className="rounded-2xl border border-line bg-white p-6 shadow-soft">
         <div className="mb-5">
+          <h2 className="font-semibold">Invitar a un usuario</h2>
+          <p className="mt-1 text-xs leading-5 text-muted">
+            Envía un enlace al correo institucional. Al aceptar y establecer su contraseña, el usuario aparecerá con rol pendiente para que puedas vincularlo.
+          </p>
+        </div>
+        <form onSubmit={inviteAccount} className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <div>
+            <label htmlFor="inviteEmail" className="mb-2 block text-sm font-medium">Correo electrónico</label>
+            <input id="inviteEmail" type="email" required maxLength={254} value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
+              placeholder="usuario@unitru.edu.pe"
+              className="w-full rounded-xl border border-line px-3 py-3" />
+          </div>
+          <button type="submit" disabled={saving || !inviteEmail.trim()}
+            className="self-end rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+            {saving ? "Enviando..." : "Enviar invitación"}
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-2xl border border-line bg-white p-6 shadow-soft">
+        <div className="mb-5">
           <h2 className="font-semibold">Habilitar una cuenta</h2>
           <p className="mt-1 text-xs leading-5 text-muted">La cuenta debe existir previamente en Supabase Auth. Aquí solo se configura el perfil y su vinculación institucional.</p>
         </div>
@@ -258,7 +304,7 @@ export default function AdminWorkspace() {
           {!data.assignments.length && <p className="mt-3 text-sm text-muted">Todavía no hay relaciones terapeuta–estudiante.</p>}
         </div>
       </section>
-      <p className="text-xs leading-5 text-muted">Las cuentas nuevas reciben el rol pendiente automáticamente. Promueve a administrador solo a personal autorizado; el sistema impide retirar el único administrador activo. Las altas de usuarios y la gestión de contraseñas se mantienen en Supabase Auth.</p>
+      <p className="text-xs leading-5 text-muted">Las cuentas nuevas reciben el rol pendiente automáticamente. Promueve a administrador solo a personal autorizado; el sistema impide retirar el único administrador activo. Las invitaciones se envían desde este panel; el usuario establece su propia contraseña mediante un enlace seguro de Supabase Auth.</p>
     </div>
   );
 }
