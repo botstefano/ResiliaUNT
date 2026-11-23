@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import PortalShell from "@/components/portal-shell";
 import { getAuthContext } from "@/lib/auth/context";
 
+export const dynamic = "force-dynamic";
+
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const { user, profile } = await getAuthContext();
   if (!user) redirect("/login");
