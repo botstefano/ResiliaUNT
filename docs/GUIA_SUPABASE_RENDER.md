@@ -74,6 +74,7 @@ Configura `.env.local` con:
 
 - Login con Supabase Auth, recuperación de contraseña por correo y perfiles pendientes por defecto.
 - Dashboard con los cuatro KPI, tendencia mensual, tasa de registros de hábitos y correlaciones exploratorias agregadas por estudiante (solo perfiles profesionales/administrativos).
+- Exportación CSV agregada del resumen, sin nombres ni códigos de estudiantes.
 - Portal estudiante: registro de hábitos, metas y consulta de sesiones propias.
 - Portal terapeuta: cartera asignada, Perfil 360, registro de evaluación clínica y red de apoyo, selección de sala, programación y actualización de estado de sesiones.
 - Portal administrador: invitación por correo, activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
