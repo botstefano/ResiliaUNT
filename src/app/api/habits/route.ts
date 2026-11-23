@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
+import { todayInPeru } from "@/lib/dates";
 
 const habitSchema = z.object({
   id_habito: z.coerce.number().int().positive(),
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
   if (profile?.rol !== "estudiante" || !profile.id_estudiante) return NextResponse.json({ error: "Módulo exclusivo para estudiantes." }, { status: 403 });
 
   const url = new URL(request.url);
-  const date = url.searchParams.get("fecha") || new Date().toISOString().slice(0, 10);
+  const date = url.searchParams.get("fecha") || todayInPeru();
   const [habitsResult, recordsResult] = await Promise.all([
     supabase.from("habito").select("id_habito, nombre, categoria").eq("activo", true).order("nombre"),
     supabase.from("registro_habito").select("id_registro_habito, id_habito, fecha, intensidad, completado").eq("id_estudiante", profile.id_estudiante).eq("fecha", date).order("id_habito"),
