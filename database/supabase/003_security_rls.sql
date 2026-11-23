@@ -167,8 +167,8 @@ as $$
   );
 $$;
 
--- Perfil: cada usuario únicamente consulta su propio perfil. La asignación de roles
--- se realiza desde el panel SQL de Supabase por un administrador del proyecto.
+-- Perfil: cada usuario únicamente consulta su propio perfil. El primer administrador
+-- se habilita una sola vez por el propietario del proyecto; después se usa /portal/admin.
 alter table public.perfiles_app enable row level security;
 drop policy if exists perfiles_select_own_or_admin on public.perfiles_app;
 create policy perfiles_select_own_or_admin on public.perfiles_app
