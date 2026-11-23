@@ -9,6 +9,7 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
    - `database/supabase/001_oltp.sql`
    - `database/supabase/002_datamart.sql`
    - `database/supabase/003_security_rls.sql`
+   - `database/supabase/007_permisos_escritura_api.sql`
    - `database/supabase/004_etl.sql`
    - `database/supabase/005_seed_demo.sql` solo si se trata de un entorno de demostración.
 3. Ejecuta `database/supabase/006_validaciones_kpi.sql` después del ETL para revisar conteos, fechas, relaciones y KPI.
