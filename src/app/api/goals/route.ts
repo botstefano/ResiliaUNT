@@ -15,7 +15,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
   if (profile?.rol !== "estudiante" || !profile.id_estudiante) return NextResponse.json({ error: "Módulo exclusivo para estudiantes." }, { status: 403 });
 
-  const { data: goals, error } = await supabase.from("meta_personal")
+  const { data: goals, error } = await supabase.schema("oltp_resiliencia").from("meta_personal")
     .select("id_meta, categoria, descripcion, fecha_creacion, fecha_objetivo, activa")
     .eq("id_estudiante", profile.id_estudiante).eq("activa", true).order("fecha_creacion", { ascending: false });
   if (error) return NextResponse.json({ error: "No se pudieron consultar las metas." }, { status: 500 });
@@ -23,7 +23,7 @@ export async function GET() {
   const ids = (goals ?? []).map((goal) => goal.id_meta);
   let records: Array<{ id_meta: number; fecha: string; estado: string }> = [];
   if (ids.length) {
-    const result = await supabase.from("registro_meta").select("id_meta, fecha, estado")
+    const result = await supabase.schema("oltp_resiliencia").from("registro_meta").select("id_meta, fecha, estado")
       .in("id_meta", ids).order("fecha", { ascending: false });
     if (result.error) return NextResponse.json({ error: "No se pudo consultar el estado de las metas." }, { status: 500 });
     records = result.data ?? [];
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const parsed = createGoalSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Revisa la categoría, descripción y fecha objetivo." }, { status: 400 });
 
-  const { data: goal, error } = await supabase.from("meta_personal").insert({
+  const { data: goal, error } = await supabase.schema("oltp_resiliencia").from("meta_personal").insert({
     id_estudiante: profile.id_estudiante,
     categoria: parsed.data.categoria,
     descripcion: parsed.data.descripcion,
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   if (error || !goal) return NextResponse.json({ error: "No se pudo crear la meta." }, { status: 400 });
 
   const today = todayInPeru();
-  const stateResult = await supabase.from("registro_meta").insert({ id_meta: goal.id_meta, fecha: today, estado: "Pendiente" });
+  const stateResult = await supabase.schema("oltp_resiliencia").from("registro_meta").insert({ id_meta: goal.id_meta, fecha: today, estado: "Pendiente" });
   if (stateResult.error) return NextResponse.json({ error: "La meta se creó, pero no se pudo registrar su estado inicial. Contacta al administrador." }, { status: 500 });
 
   const datamartRefreshed = await refreshDataMart();
@@ -70,7 +70,7 @@ export async function PUT(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Datos de estado inválidos." }, { status: 400 });
 
   const today = new Date().toISOString().slice(0, 10);
-  const { error } = await supabase.from("registro_meta").upsert(
+  const { error } = await supabase.schema("oltp_resiliencia").from("registro_meta").upsert(
     { id_meta: parsed.data.id_meta, fecha: today, estado: parsed.data.estado },
     { onConflict: "id_meta,fecha" },
   );
