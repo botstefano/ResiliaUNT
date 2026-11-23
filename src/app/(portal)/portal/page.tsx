@@ -66,8 +66,7 @@ export default async function PortalHomePage() {
             <p className="text-sm font-medium text-brand-700">Analítica exploratoria</p>
             <h2 className="mt-1 text-lg font-semibold">Relación entre hábitos e indicadores</h2>
             <p className="mt-1 text-xs leading-5 text-muted">
-              Correlación de Pearson entre el porcentaje mensual de hábitos completados y los promedios clínicos,
-              emparejados por estudiante y mes. Se requieren al menos 10 pares para mostrar un coeficiente.
+              Correlación de Pearson entre promedios del período por estudiante, calculados a partir de los meses en que existen registros de hábitos y evaluación clínica. Se requieren al menos 10 estudiantes para mostrar un coeficiente.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -87,12 +86,12 @@ export default async function PortalHomePage() {
             </article>
           </div>
           <p className="mt-4 text-xs leading-5 text-muted">
-            {summary.habitAssociationPairs < 10
-              ? "Hay " + summary.habitAssociationPairs + " pares estudiante-mes; aún no se alcanza el mínimo de 10."
+            {summary.habitAssociationStudents < 10
+              ? "Hay " + summary.habitAssociationStudents + " estudiantes con datos emparejados; aún no se alcanza el mínimo de 10."
               : summary.habitResilienceCorrelation === null && summary.habitIntrusiveCorrelation === null
                 ? "La correlación no es calculable con estos datos (por ejemplo, por falta de variabilidad)."
-                : "Base: " + summary.habitAssociationPairs + " pares estudiante-mes."}
-            {" "}Es una asociación descriptiva: no demuestra causalidad ni reemplaza un análisis longitudinal que tenga en cuenta medidas repetidas.
+                : "Base: " + summary.habitAssociationStudents + " estudiantes, una observación agregada por persona."}
+            {" "}Es una asociación descriptiva: no demuestra causalidad ni sustituye una evaluación profesional.
           </p>
         </section>
       )}
