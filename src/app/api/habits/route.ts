@@ -4,6 +4,8 @@ import { getAuthContext } from "@/lib/auth/context";
 import { refreshDataMart } from "@/lib/supabase/admin";
 import { todayInPeru } from "@/lib/dates";
 
+export const dynamic = "force-dynamic";
+
 const habitSchema = z.object({
   id_habito: z.coerce.number().int().positive(),
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
