@@ -32,8 +32,10 @@
 5. `008_meta_transaccional.sql` — crea una meta y su estado inicial en una transacción.
 6. `009_admin_asignaciones.sql` — habilita el historial de relaciones terapeuta–estudiante y permisos mínimos del panel administrativo.
 7. `004_etl.sql`
-8. `005_seed_demo.sql` — opcional, solo en desarrollo.
-9. `006_validaciones_kpi.sql`
+8. `010_hardening_rls.sql` — mueve los helpers SECURITY DEFINER a `resilia_private` (no exponer ese esquema) y separa políticas de lectura/escritura.
+9. `011_foreign_key_indexes.sql` — índices de soporte para claves foráneas.
+10. `005_seed_demo.sql` — opcional, solo en desarrollo.
+11. `006_validaciones_kpi.sql`
 
 ## Límites que siguen vigentes
 
@@ -42,7 +44,10 @@
 - No se han incorporado notas clínicas narrativas ni relatos personales.
 - El seed contiene solamente datos sintéticos de demostración.
 - Los rangos y definiciones de los instrumentos deben ser confirmados por el responsable profesional e institucional antes de medir a estudiantes reales.
-- El código requiere configuración de un proyecto Supabase, revisión de RLS en ese proyecto y variables seguras en Render para ejecutarse de extremo a extremo.
-- El CI de GitHub Actions valida tipos, pruebas unitarias, lint y compilación de producción; todavía no se ha conectado ni probado contra un proyecto Supabase real.
-- El repositorio de GitHub mantiene visibilidad pública; cámbialo a privado antes de incluir documentación interna o materiales institucionales y nunca subas datos reales ni credenciales.
+- El proyecto Supabase `ResiliaUNT` está conectado; se aplicaron las migraciones 001–004, 007–011 y se cargó el seed exclusivamente sintético.
+- La base contiene 40 estudiantes demo, 400 evaluaciones clínicas, 800 registros de hábitos, 80 metas, 800 estados de meta y 400 valoraciones de red de apoyo. Los cuatro hechos del DataMart fueron cotejados con OLTP y no se detectaron claves huérfanas.
+- RLS está habilitado en todas las tablas de la aplicación; los asesores de seguridad y salud de Supabase no reportan avisos. Los índices de soporte de claves foráneas se añadieron en la migración 011.
+- Falta agregar `oltp_resiliencia` y `datamart_resiliencia` a **API → Exposed schemas**. No exponer `resilia_private`. También faltan configuración de URL/callbacks de Auth, creación de la cuenta administradora inicial, variables de entorno de Render y pruebas E2E con cuentas separadas.
+- El CI de GitHub Actions valida tipos, pruebas unitarias, lint y compilación de producción; no reemplaza las pruebas E2E del despliegue.
+- El repositorio mantiene visibilidad pública; como el contenido actual es sintético puede conservarse así. Nunca subir datos personales ni credenciales.
 - Este commit no representa una validación de despliegue ni una autorización institucional para operar con datos reales.
