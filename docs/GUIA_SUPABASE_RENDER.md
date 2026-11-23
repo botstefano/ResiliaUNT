@@ -18,7 +18,7 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
 4. En **Project Settings → API → Exposed schemas**, agrega `oltp_resiliencia` y `datamart_resiliencia` junto con `public`. No agregues otros esquemas sin revisar sus permisos.
 5. En **Authentication → URL Configuration**, configura el dominio público de Render como Site URL y permite los redirect URLs de desarrollo y producción que permitan el callback y su parámetro `next` (por ejemplo `http://localhost:3000/auth/callback**` y `https://TU-SERVICIO.onrender.com/auth/callback**`). En producción usa exclusivamente HTTPS.
 6. Configura la plantilla de correo de recuperación de Supabase Auth y comprueba que su enlace redirija al callback de la aplicación.
-7. Mantén el registro público cerrado. Crea o invita usuarios mediante el procedimiento institucional aprobado; el trigger asigna inicialmente el rol `pendiente`.
+7. Mantén el registro público cerrado. Después del primer administrador, invita a los usuarios desde `/portal/admin`; el trigger asigna inicialmente el rol `pendiente`.
 
 ## 2. Crear el primer administrador y gestionar accesos
 
@@ -39,9 +39,9 @@ where id = (
 );
 ```
 
-Comprueba que se haya actualizado exactamente una fila y vuelve a iniciar sesión. Después, entra a **/portal/admin**: desde el panel podrás habilitar cuentas como estudiante o terapeuta, vincularlas al registro institucional y asignar/cerrar relaciones terapeuta–estudiante.
+Comprueba que se haya actualizado exactamente una fila y vuelve a iniciar sesión. Después, entra a **/portal/admin**. Desde el panel podrás invitar usuarios por correo, habilitar sus perfiles como estudiante o terapeuta, vincularlos con el registro institucional y asignar/cerrar relaciones terapeuta–estudiante. El enlace de invitación lleva al callback y a la pantalla donde el usuario define su propia contraseña.
 
-La clave `SUPABASE_SERVICE_ROLE_KEY` solo se utiliza en rutas del servidor. Cada operación administrativa valida primero que la sesión autenticada tenga rol `administrador`. El panel protege contra la retirada accidental del único administrador activo.
+La clave `SUPABASE_SERVICE_ROLE_KEY` solo se utiliza en rutas del servidor. La ruta de invitación y cada operación administrativa validan primero que la sesión autenticada tenga rol `administrador`. El panel protege contra la retirada accidental del único administrador activo.
 
 ## 3. Ejecutar localmente
 
