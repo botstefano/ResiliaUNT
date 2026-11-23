@@ -173,8 +173,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Solo se pueden asignar estudiantes y terapeutas activos." }, { status: 400 });
     }
 
-    const assignmentsTable = admin.schema("oltp_resiliencia").from("terapeuta_estudiante");
-    const { data: existing, error: existingError } = await assignmentsTable
+    const { data: existing, error: existingError } = await admin.schema("oltp_resiliencia").from("terapeuta_estudiante")
       .select("id_asignacion, id_terapeuta, id_estudiante, fecha_inicio, activo")
       .eq("id_terapeuta", parsed.data.id_terapeuta)
       .eq("id_estudiante", parsed.data.id_estudiante)
