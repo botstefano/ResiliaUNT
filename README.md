@@ -121,7 +121,7 @@ Después de volver a iniciar sesión, el administrador utiliza `/portal/admin` p
 
 ## Módulos implementados en esta primera base
 
-- Acceso con Supabase Auth; el usuario nuevo queda con rol `pendiente` hasta habilitación manual.
+- Acceso con Supabase Auth y recuperación de contraseña por correo; el usuario nuevo queda con rol `pendiente` hasta habilitación administrativa.
 - Portal estudiante: KPI personales, registro diario de hábitos, metas y consulta de sesiones propias.
 - Portal terapeuta: panel analítico, cartera asignada, Perfil 360 individual, evaluaciones clínicas, valoración de red de apoyo, programación y actualización de estado de sesiones, y selección de sala de terapia.
 - Portal administrador: habilitación de perfiles, vinculación de cuentas con estudiantes/terapeutas y administración de asignaciones con historial.
