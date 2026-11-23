@@ -2,7 +2,7 @@
 
 ## Base funcional añadida
 
-- Inicio de sesión con Supabase Auth y perfil pendiente hasta asignación administrativa.
+- Inicio de sesión y recuperación de contraseña con Supabase Auth; el perfil nuevo queda pendiente hasta asignación administrativa.
 - Panel administrativo protegido para habilitar perfiles, vincular estudiantes/terapeutas y gestionar asignaciones con historial.
 - Separación de portal de estudiante y portal profesional según el rol de `perfiles_app`.
 - Tablero con los cuatro KPI oficiales, tendencia mensual y variables complementarias separadas. El KPI de red activa utiliza la última valoración por estudiante dentro del período para evitar ponderación por frecuencia de evaluación.
