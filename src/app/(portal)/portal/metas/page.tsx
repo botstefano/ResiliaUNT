@@ -1,6 +1,11 @@
+import { redirect } from "next/navigation";
+import { getAuthContext } from "@/lib/auth/context";
 import GoalsManager from "./goals-manager";
 
-export default function GoalsPage() {
+export default async function GoalsPage() {
+  const { profile } = await getAuthContext();
+  if (profile?.rol !== "estudiante") redirect("/portal");
+
   return (
     <>
       <div className="mb-7">

@@ -1,6 +1,11 @@
+import { redirect } from "next/navigation";
+import { getAuthContext } from "@/lib/auth/context";
 import HabitTracker from "./habit-tracker";
 
-export default function HabitsPage() {
+export default async function HabitsPage() {
+  const { profile } = await getAuthContext();
+  if (profile?.rol !== "estudiante") redirect("/portal");
+
   return (
     <>
       <div className="mb-7">

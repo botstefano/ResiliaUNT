@@ -1,6 +1,11 @@
+import { redirect } from "next/navigation";
+import { getAuthContext } from "@/lib/auth/context";
 import SessionsList from "./sessions-list";
 
-export default function SessionsPage() {
+export default async function SessionsPage() {
+  const { profile } = await getAuthContext();
+  if (!profile || !["estudiante", "terapeuta"].includes(profile.rol)) redirect("/portal");
+
   return (
     <>
       <div className="mb-7">
