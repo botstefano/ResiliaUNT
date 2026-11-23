@@ -24,7 +24,7 @@ export type DashboardSummary = {
   habitRecordsCount: number;
   habitResilienceCorrelation: number | null;
   habitIntrusiveCorrelation: number | null;
-  habitAssociationPairs: number;
+  habitAssociationStudents: number;
   trend: Array<{ month: string; resilience: number | null; intrusive: number | null }>;
 };
 
@@ -54,7 +54,7 @@ export const emptyDashboard: DashboardSummary = {
   resilience: null, intrusivePer30Days: null, goalCompletionPct: null, activeSupportPct: null,
   activeContactsAvg: null, interactionsAvg: null, evaluationsCount: 0, goalsCount: 0,
   supportEvaluationsCount: 0, supportStudentsCount: 0, habitsCompletionPct: null, habitRecordsCount: 0,
-  habitResilienceCorrelation: null, habitIntrusiveCorrelation: null, habitAssociationPairs: 0, trend: [],
+  habitResilienceCorrelation: null, habitIntrusiveCorrelation: null, habitAssociationStudents: 0, trend: [],
 };
 
 export async function getDashboardSummary(supabase: SupabaseClient): Promise<DashboardSummary> {
@@ -123,9 +123,10 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     habitsByStudentMonth.set(key, counts);
   });
 
-  const habitRates: number[] = [];
-  const matchedResilience: number[] = [];
-  const matchedIntrusive: number[] = [];
+  // Colapsa las observaciones mensuales en un promedio por estudiante antes de
+  // calcular Pearson. Así no se cuenta repetidamente a la misma persona como
+  // si fueran participantes independientes.
+  const associationByStudent = new Map<number, { habits: number[]; resilience: number[]; intrusive: number[] }>();
   clinicalByStudentMonth.forEach((clinicalValues, key) => {
     const habitValues = habitsByStudentMonth.get(key);
     if (!habitValues || habitValues.total === 0) return;
@@ -133,10 +134,25 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     const resilienceValue = average(clinicalValues.resilience);
     const intrusiveValue = average(clinicalValues.intrusive);
     if (habitRate === null || resilienceValue === null || intrusiveValue === null) return;
-    habitRates.push(habitRate);
-    matchedResilience.push(resilienceValue);
-    matchedIntrusive.push(intrusiveValue);
+
+    const studentId = Number(key.slice(0, key.indexOf(":")));
+    const values = associationByStudent.get(studentId) ?? { habits: [], resilience: [], intrusive: [] };
+    values.habits.push(habitRate);
+    values.resilience.push(resilienceValue);
+    values.intrusive.push(intrusiveValue);
+    associationByStudent.set(studentId, values);
   });
+
+  const studentAssociations = [...associationByStudent.values()].map((values) => ({
+    habits: average(values.habits),
+    resilience: average(values.resilience),
+    intrusive: average(values.intrusive),
+  })).filter((values): values is { habits: number; resilience: number; intrusive: number } =>
+    values.habits !== null && values.resilience !== null && values.intrusive !== null);
+
+  const habitRates = studentAssociations.map((row) => row.habits);
+  const matchedResilience = studentAssociations.map((row) => row.resilience);
+  const matchedIntrusive = studentAssociations.map((row) => row.intrusive);
 
   // El resumen general pondera una vez por estudiante; la serie mensual
   // primero resume múltiples evaluaciones de una persona dentro del mismo mes.
@@ -176,7 +192,7 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     habitRecordsCount: habits.length,
     habitResilienceCorrelation: pearsonCorrelation(habitRates, matchedResilience),
     habitIntrusiveCorrelation: pearsonCorrelation(habitRates, matchedIntrusive),
-    habitAssociationPairs: habitRates.length,
+    habitAssociationStudents: habitRates.length,
     trend,
   };
 }
