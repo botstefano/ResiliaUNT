@@ -16,7 +16,7 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
    - `database/supabase/005_seed_demo.sql` solo si se trata de un entorno de demostración.
 3. Ejecuta `database/supabase/006_validaciones_kpi.sql` después del ETL para revisar conteos, fechas, relaciones y KPI.
 4. En **Project Settings → API → Exposed schemas**, agrega `oltp_resiliencia` y `datamart_resiliencia` junto con `public`. No agregues otros esquemas sin revisar sus permisos.
-5. En **Authentication → URL Configuration**, configura el dominio público de Render como Site URL y permite los redirect URLs de desarrollo y producción terminados en `/auth/callback` (por ejemplo `http://localhost:3000/auth/callback` y `https://TU-SERVICIO.onrender.com/auth/callback`). En producción usa exclusivamente HTTPS.
+5. En **Authentication → URL Configuration**, configura el dominio público de Render como Site URL y permite los redirect URLs de desarrollo y producción que permitan el callback y su parámetro `next` (por ejemplo `http://localhost:3000/auth/callback**` y `https://TU-SERVICIO.onrender.com/auth/callback**`). En producción usa exclusivamente HTTPS.
 6. Configura la plantilla de correo de recuperación de Supabase Auth y comprueba que su enlace redirija al callback de la aplicación.
 7. Mantén el registro público cerrado. Crea o invita usuarios mediante el procedimiento institucional aprobado; el trigger asigna inicialmente el rol `pendiente`.
 
@@ -73,7 +73,7 @@ Configura `.env.local` con:
 ## 5. Módulos disponibles en esta base
 
 - Login con Supabase Auth, recuperación de contraseña por correo y perfiles pendientes por defecto.
-- Dashboard con los cuatro KPI y tendencia mensual.
+- Dashboard con los cuatro KPI, tendencia mensual, tasa de registros de hábitos y correlaciones exploratorias agregadas por estudiante (solo perfiles profesionales/administrativos).
 - Portal estudiante: registro de hábitos, metas y consulta de sesiones propias.
 - Portal terapeuta: cartera asignada, Perfil 360, registro de evaluación clínica y red de apoyo, selección de sala, programación y actualización de estado de sesiones.
 - Portal administrador: activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
