@@ -16,6 +16,7 @@ export type DashboardSummary = {
   activeContactsAvg: number | null;
   interactionsAvg: number | null;
   evaluationsCount: number;
+  evaluatedStudentsCount: number;
   goalsCount: number;
   supportEvaluationsCount: number;
   supportStudentsCount: number;
@@ -137,12 +138,17 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
     matchedIntrusive.push(intrusiveValue);
   });
 
+  // El resumen general pondera una vez por estudiante; la serie mensual
+  // primero resume múltiples evaluaciones de una persona dentro del mismo mes.
+  const latestClinical = latestByKey(clinical, (row) => row.estudiante_key, (row) => row.tiempo_key);
   const byMonth = new Map<number, { resilience: number[]; intrusive: number[] }>();
-  clinical.forEach((row) => {
-    const monthKey = Math.floor(row.tiempo_key / 100);
+  clinicalByStudentMonth.forEach((values, key) => {
+    const monthKey = Number(key.slice(key.indexOf(":") + 1));
     const current = byMonth.get(monthKey) ?? { resilience: [], intrusive: [] };
-    current.resilience.push(Number(row.indice_resiliencia));
-    current.intrusive.push(normalizeTo30Days(Number(row.pensamientos_intrusivos), Number(row.periodo_referencia_dias)) ?? 0);
+    const resilienceValue = average(values.resilience);
+    const intrusiveValue = average(values.intrusive);
+    if (resilienceValue !== null) current.resilience.push(resilienceValue);
+    if (intrusiveValue !== null) current.intrusive.push(intrusiveValue);
     byMonth.set(monthKey, current);
   });
 
@@ -155,13 +161,14 @@ export async function getDashboardSummary(supabase: SupabaseClient): Promise<Das
   });
 
   return {
-    resilience: average(clinical.map((row) => Number(row.indice_resiliencia))),
-    intrusivePer30Days: average(clinical.map((row) => normalizeTo30Days(Number(row.pensamientos_intrusivos), Number(row.periodo_referencia_dias)) ?? 0)),
+    resilience: average(latestClinical.map((row) => Number(row.indice_resiliencia))),
+    intrusivePer30Days: average(latestClinical.map((row) => normalizeTo30Days(Number(row.pensamientos_intrusivos), Number(row.periodo_referencia_dias)) ?? 0)),
     goalCompletionPct: percentage(goalStates.filter((row) => Number(row.metas_cumplidas) === 1).length, goalStates.length),
     activeSupportPct: percentage(activeNetworks.length, latestNetworks.length),
     activeContactsAvg: average(latestNetworks.map((row) => Number(row.contactos_activos))),
     interactionsAvg: average(latestNetworks.map((row) => Number(row.interacciones_sociales))),
     evaluationsCount: clinical.length,
+    evaluatedStudentsCount: latestClinical.length,
     goalsCount: goalStates.length,
     supportEvaluationsCount: network.length,
     supportStudentsCount: latestNetworks.length,
