@@ -13,13 +13,15 @@
 - RLS como segunda capa de autorización en la base de datos.
 - Refresco del DataMart por RPC de servidor después de operaciones que generan hechos.
 - Pruebas unitarias de las funciones de normalización y cálculo de KPI.
+- Workflow de GitHub Actions para TypeScript, pruebas, ESLint y build.
+- Endpoint `/api/health` para comprobación de disponibilidad del servicio.
 
 ## Orden de ejecución de SQL
 
 1. `001_oltp.sql`
 2. `002_datamart.sql`
 3. `003_security_rls.sql`
-4. `007_permisos_escritura_api.sql` — permisos de INSERT/UPDATE para evaluaciones y sesiones.
+4. `007_permisos_escritura_api.sql` — permisos mínimos de escritura para evaluaciones y sesiones.
 5. `004_etl.sql`
 6. `005_seed_demo.sql` — opcional, solo en desarrollo.
 7. `006_validaciones_kpi.sql`
