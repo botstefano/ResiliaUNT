@@ -22,7 +22,7 @@ Esta guía describe la configuración inicial. No contiene credenciales ni reemp
 
 ## 2. Crear el primer administrador y gestionar accesos
 
-Las cuentas se crean o invitan primero desde **Supabase → Authentication → Users**. El trigger crea automáticamente un perfil con rol `pendiente`.
+Para el primer administrador, crea o invita la cuenta desde **Supabase → Authentication → Users**. Para las cuentas posteriores, el administrador utilizará la opción **Invitar a un usuario** de `/portal/admin`. El trigger crea automáticamente el perfil con rol `pendiente`.
 
 Solo para habilitar al primer administrador del sistema, el propietario del proyecto debe ejecutar una vez en SQL Editor, sustituyendo el correo de ejemplo por el correo real de la cuenta creada:
 
@@ -58,7 +58,7 @@ Configura `.env.local` con:
 - `NEXT_PUBLIC_SUPABASE_URL`: URL del proyecto.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: clave anon/publishable, apta para navegador porque RLS limita el acceso.
 - `SUPABASE_SERVICE_ROLE_KEY`: clave privilegiada, exclusivamente del servidor. Nunca anteponer `NEXT_PUBLIC_`.
-- `NEXT_PUBLIC_APP_URL`: URL local o pública de la aplicación.
+- `NEXT_PUBLIC_APP_URL`: URL base local o pública de la aplicación. Es obligatoria para invitar cuentas y en Render debe ser el dominio HTTPS del servicio.
 
 ## 4. Desplegar en Render
 
@@ -66,7 +66,7 @@ Configura `.env.local` con:
 2. Selecciona runtime Node.
 3. Build command: `npm install && npm run build`.
 4. Start command: `npm start`.
-5. Configura las variables de entorno anteriores desde el panel de Render; no las escribas en el repositorio.
+5. Configura las variables de entorno anteriores desde el panel de Render; no las escribas en el repositorio. Define `NEXT_PUBLIC_APP_URL` con la URL HTTPS pública exacta de tu servicio, sin rutas adicionales.
 6. Añade el dominio Render en la configuración URL de Supabase Auth y valida el inicio/cierre de sesión.
 7. Prueba los perfiles `estudiante`, `terapeuta` y `administrador` por separado.
 
@@ -76,7 +76,7 @@ Configura `.env.local` con:
 - Dashboard con los cuatro KPI, tendencia mensual, tasa de registros de hábitos y correlaciones exploratorias agregadas por estudiante (solo perfiles profesionales/administrativos).
 - Portal estudiante: registro de hábitos, metas y consulta de sesiones propias.
 - Portal terapeuta: cartera asignada, Perfil 360, registro de evaluación clínica y red de apoyo, selección de sala, programación y actualización de estado de sesiones.
-- Portal administrador: activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
+- Portal administrador: invitación por correo, activación de perfiles y mantenimiento de asignaciones terapeuta–estudiante con historial.
 - ETL OLTP → DataMart, refresco tras registros y script de validación.
 
 ## 6. Antes de producción
